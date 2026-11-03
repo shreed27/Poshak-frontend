@@ -1,0 +1,1719 @@
+/* ==========================================================================
+   POSHAK — SWIGGY-INSPIRED CLEAN & INTUITIVE APP STYLES
+   ========================================================================== */
+
+.swiggy-app-root {
+  min-height: 100vh;
+  background-color: #f7f8fa;
+  color: #1c1c1c;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 90px; /* Space for sticky cart / mobile bottom bar */
+}
+
+/* ==========================================
+   1. SWIGGY TOP HEADER
+   ========================================== */
+.swiggy-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #ffffff;
+  border-bottom: 1px solid #ebebeb;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.04);
+}
+
+.swiggy-header-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.swiggy-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-shrink: 0;
+}
+
+.swiggy-logo {
+  font-family: var(--font-serif-logo, 'Playfair Display', Georgia, serif);
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0a0a0a;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+}
+
+.swiggy-logo-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fa5929;
+}
+
+/* Swiggy Address Picker Pill */
+.swiggy-address-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.3rem 0.5rem;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+  max-width: 280px;
+}
+
+.swiggy-address-btn:hover {
+  background: #f1f2f4;
+}
+
+.address-label-bold {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #0a0a0a;
+  border-bottom: 2px solid #0a0a0a;
+  line-height: 1.2;
+}
+
+.address-sub-text {
+  font-size: 0.78rem;
+  color: #686b78;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+/* Swiggy Header Search Bar */
+.swiggy-header-search {
+  flex: 1;
+  max-width: 440px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.swiggy-search-input {
+  width: 100%;
+  background: #f1f2f4;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 0.65rem 1rem 0.65rem 2.4rem;
+  font-size: 0.86rem;
+  color: #1a1a1a;
+  transition: all 0.2s ease;
+}
+
+.swiggy-search-input:focus {
+  background: #ffffff;
+  border-color: #fa5929;
+  box-shadow: 0 0 0 3px rgba(250, 89, 41, 0.12);
+}
+
+.swiggy-search-icon {
+  position: absolute;
+  left: 0.85rem;
+  color: #7e808c;
+  pointer-events: none;
+}
+
+/* Header Right: Navigation Links & Profile */
+.swiggy-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-shrink: 0;
+}
+
+.swiggy-nav-pill-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: transparent;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #3d4152;
+  cursor: pointer;
+  padding: 0.45rem 0.75rem;
+  border-radius: 9999px;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.swiggy-nav-pill-btn:hover {
+  color: #fa5929;
+}
+
+.swiggy-nav-pill-btn.active {
+  color: #fa5929;
+  background: rgba(250, 89, 41, 0.08);
+}
+
+.swiggy-cart-badge {
+  background: #fa5929;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 0.1rem 0.45rem;
+  border-radius: 9999px;
+  margin-left: 0.15rem;
+}
+
+/* ==========================================
+   2. MAIN FEED CONTAINER
+   ========================================== */
+.swiggy-feed-container {
+  max-width: 1180px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 1.25rem 1.25rem 3rem;
+}
+
+/* Active Order Floating Strip (Like Swiggy Live Tracking Bar) */
+.swiggy-live-order-strip {
+  background: linear-gradient(135deg, #0a0a0a 0%, #1f1f23 100%);
+  color: #ffffff;
+  border-radius: 16px;
+  padding: 0.85rem 1.25rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.swiggy-live-order-strip:hover {
+  transform: translateY(-2px);
+}
+
+.strip-status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #fa5929;
+  animation: swiggy-pulse 1.5s infinite;
+}
+
+@keyframes swiggy-pulse {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.8; }
+}
+
+.strip-track-btn {
+  background: #fa5929;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+
+/* ==========================================
+   3. PROMO BANNERS CAROUSEL
+   ========================================== */
+.swiggy-promo-carousel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.swiggy-banner-card {
+  border-radius: 20px;
+  padding: 1.25rem 1.5rem;
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 120px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+.banner-orange {
+  background: linear-gradient(135deg, #fa5929 0%, #ea580c 100%);
+}
+
+.banner-blue {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+}
+
+.banner-dark {
+  background: linear-gradient(135deg, #18181b 0%, #27272a 100%);
+}
+
+.banner-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  width: fit-content;
+  margin-bottom: 0.5rem;
+}
+
+.banner-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.banner-sub {
+  font-size: 0.82rem;
+  opacity: 0.9;
+  margin-top: 0.2rem;
+}
+
+/* ==========================================
+   4. "WHAT ARE YOU WASHING TODAY?" CATEGORIES
+   ========================================== */
+.swiggy-section-heading {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #0a0a0a;
+  margin-bottom: 1rem;
+}
+
+.swiggy-categories-row {
+  display: flex;
+  gap: 1.25rem;
+  overflow-x: auto;
+  padding-bottom: 0.75rem;
+  margin-bottom: 2.25rem;
+  scrollbar-width: none;
+}
+
+.swiggy-categories-row::-webkit-scrollbar {
+  display: none;
+}
+
+.swiggy-cat-circle-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  width: 90px;
+  transition: transform 0.2s ease;
+}
+
+.swiggy-cat-circle-card:hover {
+  transform: translateY(-3px);
+}
+
+.cat-circle-img-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #f1f2f4;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 0.5rem;
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.swiggy-cat-circle-card.active .cat-circle-img-wrap {
+  border-color: #fa5929;
+}
+
+.cat-circle-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cat-circle-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #3d4152;
+  line-height: 1.25;
+}
+
+/* ==========================================
+   5. DASHBOARD SERVICE CATALOGUE & HOW IT WORKS
+   ========================================== */
+.dashboard-services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2.5rem;
+}
+
+.dashboard-service-card {
+  background: #ffffff;
+  border: 1.5px solid #ebebeb;
+  border-radius: 20px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.dashboard-service-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
+  border-color: #fa5929;
+}
+
+.dashboard-service-card.is-selected {
+  border-color: #fa5929;
+  box-shadow: 0 8px 24px rgba(250, 89, 41, 0.16);
+  background: #fffdfc;
+}
+
+.service-selected-pill-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: #fa5929;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  z-index: 2;
+}
+
+.dashboard-service-img-wrap {
+  height: 140px;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-service-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.dashboard-service-card:hover .dashboard-service-img {
+  transform: scale(1.04);
+}
+
+.dashboard-service-price-chip {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(10, 10, 10, 0.85);
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 0.25rem 0.65rem;
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+}
+
+.dashboard-service-body {
+  padding: 1.15rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-veg-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #16a34a;
+}
+
+.veg-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #16a34a;
+}
+
+.dashboard-service-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #111;
+  margin: 0.2rem 0 0.4rem;
+}
+
+.dashboard-service-desc {
+  font-size: 0.8rem;
+  color: #686b78;
+  line-height: 1.45;
+  margin: 0 0 1rem;
+  flex: 1;
+}
+
+/* 2-Button Action Bar on each card */
+.service-card-action-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: auto;
+}
+
+.service-select-toggle-btn {
+  flex: 1;
+  background: #f9fafb;
+  border: 1.5px solid #e5e7eb;
+  color: #374151;
+  padding: 0.55rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+}
+
+.service-select-toggle-btn:hover {
+  border-color: #fa5929;
+  color: #fa5929;
+  background: #fff7ed;
+}
+
+.service-select-toggle-btn.active {
+  background: #fa5929;
+  border-color: #fa5929;
+  color: #ffffff;
+}
+
+.service-book-direct-btn {
+  flex: 1.2;
+  background: #fff7ed;
+  color: #ea580c;
+  border: 1.5px solid #fed7aa;
+  padding: 0.55rem 0.85rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+}
+
+.service-book-direct-btn:hover {
+  background: #fa5929;
+  border-color: #fa5929;
+  color: #ffffff;
+}
+
+/* Floating Selected Services Bar */
+.services-selected-float-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(92%, 620px);
+  background: #111827;
+  color: #ffffff;
+  border-radius: 18px;
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+  z-index: 999;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+}
+
+.services-selected-float-bar:hover {
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.45);
+}
+
+.selected-float-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  max-width: 65%;
+}
+
+.selected-float-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #fb923c;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.selected-float-title {
+  font-size: 0.92rem;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.selected-float-cta-btn {
+  background: #fa5929;
+  color: #ffffff;
+  border: none;
+  padding: 0.6rem 1.15rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(250, 89, 41, 0.4);
+  transition: background 0.15s ease;
+}
+
+.selected-float-cta-btn:hover {
+  background: #ea580c;
+}
+
+
+/* How It Works Strip */
+.how-it-works-strip {
+  background: #ffffff;
+  border: 1px solid #ebebeb;
+  border-radius: 20px;
+  padding: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.how-steps-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
+
+.how-step-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.how-step-icon-bubble {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(250, 89, 41, 0.12);
+  color: #fa5929;
+  font-weight: 900;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ==========================================
+   DEDICATED 3-STEP WIZARD MODAL
+   Step 1: Service -> Step 2: Photos -> Step 3: Checkout
+   ========================================== */
+.booking-wizard-modal {
+  width: min(100%, 720px);
+  max-height: 90vh;
+  background: #ffffff;
+  border-radius: 28px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.wizard-top-header {
+  padding: 1.25rem 1.75rem 1rem;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+}
+
+.wizard-back-btn,
+.wizard-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #374151;
+  transition: background 0.15s ease;
+}
+
+.wizard-back-btn:hover,
+.wizard-close-btn:hover {
+  background: #e5e7eb;
+}
+
+/* Progress Breadcrumbs */
+.wizard-progress-track {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1.75rem;
+  background: #f9fafb;
+  border-bottom: 1px solid #f0f0f0;
+  gap: 0.75rem;
+}
+
+.wizard-step-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.wizard-step-pill.active {
+  color: #fa5929;
+  font-weight: 800;
+}
+
+.wizard-step-pill.completed {
+  color: #16a34a;
+}
+
+.step-pill-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.wizard-step-pill.active .step-pill-num {
+  background: #fa5929;
+  color: #ffffff;
+}
+
+.wizard-step-pill.completed .step-pill-num {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.step-track-divider {
+  flex: 1;
+  height: 2px;
+  background: #e5e7eb;
+}
+
+.wizard-step-body {
+  padding: 1.5rem 1.75rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.wizard-services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.95rem;
+}
+
+.wizard-service-card {
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  background: #ffffff;
+}
+
+.wizard-service-card:hover {
+  border-color: #cbd5e1;
+}
+
+.wizard-service-card.selected {
+  border-color: #fa5929;
+  background: rgba(250, 89, 41, 0.03);
+}
+
+.wizard-bottom-actions {
+  padding: 1rem 1.75rem;
+  border-top: 1px solid #f0f0f0;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.wizard-primary-next-btn {
+  background: #fa5929;
+  color: #ffffff;
+  border: none;
+  padding: 0.75rem 1.4rem;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(250, 89, 41, 0.25);
+  transition: background 0.15s ease;
+}
+
+.wizard-primary-next-btn:hover {
+  background: #e04a1d;
+}
+
+.wizard-secondary-btn {
+  background: transparent;
+  border: 1.5px solid #d1d5db;
+  color: #374151;
+  padding: 0.65rem 1.15rem;
+  border-radius: 12px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.wizard-secondary-btn:hover {
+  background: #f3f4f6;
+}
+
+.service-select-card {
+  border: 2px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 1.15rem;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+}
+
+.service-select-card:hover {
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+}
+
+.service-select-card.selected {
+  border-color: #fa5929;
+  background: rgba(250, 89, 41, 0.03);
+  box-shadow: 0 6px 20px rgba(250, 89, 41, 0.1);
+}
+
+.service-select-check {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #d1d5db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  transition: all 0.15s ease;
+}
+
+.service-select-card.selected .service-select-check {
+  border-color: #fa5929;
+  background: #fa5929;
+}
+
+/* Photo Upload Dropzone */
+.clothes-photo-dropzone {
+  border: 2px dashed #d1d5db;
+  border-radius: 20px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 1.25rem;
+}
+
+.clothes-photo-dropzone:hover,
+.clothes-photo-dropzone.drag-active {
+  border-color: #fa5929;
+  background: rgba(250, 89, 41, 0.02);
+}
+
+.upload-icon-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.75rem;
+  color: #fa5929;
+}
+
+/* Uploaded Photos Gallery */
+.uploaded-photos-grid {
+  display: flex;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.uploaded-photo-item {
+  width: 90px;
+  height: 90px;
+  border-radius: 14px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.uploaded-photo-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-delete-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #ffffff;
+  border: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.photo-delete-btn:hover {
+  background: #dc2626;
+}
+
+.add-more-photos-box {
+  width: 90px;
+  height: 90px;
+  border-radius: 14px;
+  border: 2px dashed #d1d5db;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: #ffffff;
+  transition: all 0.15s ease;
+}
+
+.add-more-photos-box:hover {
+  border-color: #fa5929;
+  color: #fa5929;
+}
+
+/* Checkout Summary Section */
+.order-checkout-section {
+  background: #f9fafb;
+  border-radius: 20px;
+  padding: 1.5rem;
+  border: 1px solid #ebebeb;
+}
+
+/* ==========================================
+   6. SWIGGY TOP STUDIOS CARDS
+   ========================================== */
+.swiggy-studios-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.swiggy-studio-card {
+  background: #ffffff;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid #ebebeb;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.swiggy-studio-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
+  transform: translateY(-2px);
+}
+
+.studio-img-wrap {
+  height: 160px;
+  position: relative;
+}
+
+.studio-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.studio-discount-tag {
+  position: absolute;
+  bottom: 8px;
+  left: 10px;
+  background: rgba(10, 10, 10, 0.85);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  backdrop-filter: blur(4px);
+}
+
+.studio-meta-pad {
+  padding: 1rem;
+}
+
+.studio-name {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin-bottom: 0.25rem;
+}
+
+.studio-rating-line {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0a0a0a;
+  margin-bottom: 0.25rem;
+}
+
+.studio-rating-pill {
+  background: #16a34a;
+  color: #ffffff;
+  font-size: 0.74rem;
+  font-weight: 800;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.studio-area-sub {
+  font-size: 0.8rem;
+  color: #686b78;
+}
+
+/* ==========================================
+   7. ICONIC SWIGGY STICKY CART BAR (FLOATING)
+   ========================================== */
+.swiggy-floating-cart-bar {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(92%, 580px);
+  background: #fa5929;
+  color: #ffffff;
+  border-radius: 16px;
+  padding: 0.85rem 1.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 10px 30px rgba(250, 89, 41, 0.4);
+  z-index: 999;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.swiggy-floating-cart-bar:hover {
+  background: #e04a1d;
+  transform: translateX(-50%) translateY(-2px);
+}
+
+.floating-cart-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.cart-items-count-text {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.95;
+}
+
+.cart-total-amount-text {
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+
+.floating-cart-right {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+/* ==========================================
+   8. SWIGGY CART SLIDE-UP DRAWER / MODAL
+   ========================================== */
+.swiggy-cart-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.swiggy-cart-sheet {
+  width: min(100%, 460px);
+  height: 100%;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.15);
+}
+
+.cart-sheet-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #ebebeb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  background: #ffffff;
+  z-index: 10;
+}
+
+.cart-sheet-body {
+  padding: 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Cart Items List */
+.cart-items-box {
+  background: #f9fafb;
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+}
+
+.cart-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid #eeeeee;
+}
+
+.cart-item-row:last-child {
+  border-bottom: none;
+}
+
+/* Slot Selector Chips */
+.cart-slots-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.cart-slot-chip {
+  flex: 1;
+  min-width: 120px;
+  padding: 0.65rem;
+  border-radius: 12px;
+  border: 1.5px solid #e5e7eb;
+  background: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cart-slot-chip.selected {
+  border-color: #fa5929;
+  background: rgba(250, 89, 41, 0.05);
+  color: #fa5929;
+}
+
+/* Bill Details */
+.cart-bill-card {
+  border-top: 1px solid #eee;
+  padding-top: 1rem;
+}
+
+.bill-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.86rem;
+  color: #555;
+  margin-bottom: 0.5rem;
+}
+
+.bill-line.to-pay {
+  border-top: 1.5px solid #111;
+  padding-top: 0.75rem;
+  margin-top: 0.75rem;
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #111;
+}
+
+/* Big Swiggy Orange Order Button */
+.swiggy-place-order-btn {
+  background: #fa5929;
+  color: #ffffff;
+  border: none;
+  padding: 1.1rem;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(250, 89, 41, 0.35);
+  transition: all 0.2s ease;
+}
+
+.swiggy-place-order-btn:hover {
+  background: #e04a1d;
+}
+
+/* ==========================================
+   9. MILESTONE PROGRESS TRACKER & CAPTAIN CARD
+   ========================================== */
+.milestone-steps-track {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin: 1.25rem 0;
+  background: #f9fafb;
+  padding: 1.15rem 1rem;
+  border-radius: 16px;
+  position: relative;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  gap: 0.5rem;
+}
+
+.milestone-step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  flex: 1;
+  min-width: 68px;
+  text-align: center;
+}
+
+.step-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: #e5e7eb;
+  color: #6b7280;
+  z-index: 2;
+  transition: all 0.2s ease;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.milestone-step-item.done .step-circle {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.milestone-step-item.active .step-circle {
+  background: #fa5929;
+  color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(250, 89, 41, 0.2);
+}
+
+.step-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #4b5563;
+  margin-top: 0.45rem;
+  line-height: 1.25;
+}
+
+.milestone-step-item.active .step-label {
+  color: #fa5929;
+  font-weight: 800;
+}
+
+.milestone-step-item.done .step-label {
+  color: #111827;
+}
+
+.step-connector {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background: #e5e7eb;
+  z-index: 1;
+}
+
+.step-connector.connector-done {
+  background: #16a34a;
+}
+
+/* Captain Card & High-Contrast OTP Badge */
+.order-captain-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1rem;
+  border-top: 1px solid #f0f0f0;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.captain-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.captain-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid #ebebeb;
+}
+
+.captain-name {
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: #111;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.captain-rating-badge {
+  background: #fef3c7;
+  color: #d97706;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.1rem 0.4rem;
+  border-radius: 6px;
+}
+
+.captain-vehicle-text {
+  font-size: 0.76rem;
+  color: #686b78;
+}
+
+/* Doorstep OTP Badge */
+.order-otp-badge {
+  background: #fff7ed;
+  border: 1.5px solid #fed7aa;
+  padding: 0.35rem 0.85rem;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.08);
+}
+
+.otp-badge-title {
+  font-size: 0.65rem;
+  font-weight: 900;
+  color: #ea580c;
+  letter-spacing: 0.08em;
+}
+
+.otp-badge-code {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #c2410c;
+  letter-spacing: 0.12em;
+  line-height: 1.1;
+}
+
+.simulate-step-btn {
+  background: #f0fdf4;
+  border: 1.5px solid #16a34a;
+  color: #16a34a;
+  padding: 0.45rem 0.95rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.simulate-step-btn:hover {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+/* ==========================================
+   10. MOBILE BOTTOM NAVIGATION DOCK
+   ========================================== */
+.mobile-bottom-nav-dock {
+  display: none; /* hidden by default on desktop */
+}
+
+/* ==========================================
+   11. RESPONSIVE MOBILE BREAKPOINTS (<= 768px, <= 480px)
+   ========================================== */
+@media (max-width: 768px) {
+  /* Prevent horizontal scrolling & body jitter */
+  body, html {
+    overflow-x: hidden;
+  }
+
+  .swiggy-app-root {
+    padding-bottom: 74px; /* Space for mobile nav dock */
+  }
+
+  /* Compact Header */
+  .swiggy-header-inner {
+    padding: 0.65rem 1rem;
+    gap: 0.6rem;
+    height: auto;
+  }
+
+  .swiggy-header-search {
+    display: none; /* Mobile users use bottom nav / search inside views */
+  }
+
+  /* In mobile header, hide the desktop text nav buttons (Laundry, Orders, Account) */
+  .swiggy-header-right .swiggy-nav-pill-btn:not(:last-child) {
+    display: none;
+  }
+
+  .swiggy-address-btn {
+    max-width: 200px;
+  }
+
+  .address-sub-text {
+    max-width: 100px;
+  }
+
+  .swiggy-feed-container {
+    padding: 1rem 1rem 4rem;
+  }
+
+  /* Floating Bottom Nav Dock (Active on Mobile) */
+  .mobile-bottom-nav-dock {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    background: #ffffff;
+    border-top: 1px solid #ebebeb;
+    padding: 6px 12px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.07);
+    z-index: 998;
+    justify-content: space-around;
+    align-items: center;
+  }
+
+  .mobile-nav-btn {
+    background: transparent;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px 14px;
+    color: #686b78;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: all 0.15s ease;
+  }
+
+  .mobile-nav-btn.active {
+    color: #fa5929;
+  }
+
+  .mobile-nav-btn-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+  }
+
+  .mobile-nav-btn.active .mobile-nav-btn-label {
+    font-weight: 800;
+  }
+
+  .nav-badge-dot {
+    position: absolute;
+    top: -2px;
+    right: -3px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #fa5929;
+    border: 2px solid #ffffff;
+  }
+
+  .nav-cart-badge-pill {
+    position: absolute;
+    top: -4px;
+    right: -6px;
+    background: #fa5929;
+    color: #ffffff;
+    font-size: 0.62rem;
+    font-weight: 900;
+    padding: 1px 5px;
+    border-radius: 9999px;
+    border: 1.5px solid #ffffff;
+  }
+
+  /* Floating Cart Bar position on Mobile (Floats right above bottom dock) */
+  .swiggy-floating-cart-bar {
+    bottom: calc(66px + max(8px, env(safe-area-inset-bottom)));
+    width: calc(100% - 24px);
+    padding: 0.75rem 1.15rem;
+    border-radius: 14px;
+  }
+
+  /* Floating Services Selected Bar position on Mobile */
+  .services-selected-float-bar {
+    bottom: calc(66px + max(8px, env(safe-area-inset-bottom))) !important;
+    width: calc(100% - 24px) !important;
+    padding: 0.75rem 1.15rem !important;
+    border-radius: 14px !important;
+  }
+
+
+  /* Modal Sheet Full Height on Mobile */
+  .swiggy-cart-modal-backdrop {
+    padding: 0 !important;
+  }
+
+  .booking-wizard-modal {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    border: none !important;
+  }
+
+  .wizard-top-header {
+    padding: 0.85rem 1rem !important;
+    padding-top: max(0.85rem, env(safe-area-inset-top)) !important;
+  }
+
+  .wizard-progress-track {
+    padding: 0.55rem 1rem !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .wizard-step-pill {
+    font-size: 0.74rem;
+    white-space: nowrap;
+  }
+
+  .wizard-step-body {
+    padding: 1rem !important;
+    padding-bottom: 96px !important;
+  }
+
+  .wizard-services-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .wizard-bottom-actions {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border-top: 1px solid #f0f0f0;
+    padding: 0.75rem 1rem !important;
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom)) !important;
+    z-index: 100;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Services Grid on Mobile */
+  .dashboard-services-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  /* Promo Banner Swipe Carousel */
+  .swiggy-promo-carousel {
+    display: flex;
+    gap: 0.85rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .swiggy-banner-card {
+    min-width: 84%;
+    max-width: 86%;
+    scroll-snap-align: start;
+    flex-shrink: 0;
+  }
+
+  /* Live Order Strip on Mobile */
+  .swiggy-live-order-strip {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.95rem 1.15rem;
+  }
+
+  .strip-track-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Inputs prevent iOS zoom */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+
+  /* Milestone Stepper on Mobile */
+  .milestone-steps-track {
+    padding: 0.85rem 0.5rem;
+    gap: 0.25rem;
+  }
+
+  .milestone-step-item {
+    min-width: 60px;
+  }
+
+  .step-label {
+    font-size: 0.65rem;
+  }
+
+  /* Captain & OTP row stack on Mobile */
+  .order-captain-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .captain-meta {
+    width: 100%;
+  }
+
+  .order-otp-badge {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+  }
+
+  .simulate-step-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.65rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .swiggy-section-heading {
+    font-size: 1.15rem;
+  }
+
+  .banner-title {
+    font-size: 1.15rem;
+  }
+
+  .cart-slots-row {
+    flex-direction: column;
+  }
+
+  .cart-slot-chip {
+    width: 100%;
+  }
+}
+

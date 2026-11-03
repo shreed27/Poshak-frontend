@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { LegalModal } from './LegalModals';
 
 export const LaundyFooter = ({ onNavClick, onOpenBooking }) => {
+  const [activeLegalTab, setActiveLegalTab] = useState(null);
   return (
     <footer className="laundy-footer-master-root">
       {/* Background Bubble Foam Texture */}
@@ -92,9 +94,39 @@ export const LaundyFooter = ({ onNavClick, onOpenBooking }) => {
           </div>
         </div>
 
-        {/* Copyright Line */}
-        <div className="footer-copyright-row">
-          <span>© 2026 <span className="text-orange">Poshak India Garment Care Pvt Ltd.</span> All Rights Reserved</span>
+        {/* Copyright Line & DPDP Statutory Links */}
+        <div className="footer-copyright-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+          <span>© 2026 <span className="text-orange">Poshak Technologies Pvt. Ltd.</span> All Rights Reserved</span>
+          <div style={{ display: 'flex', gap: '1.25rem', fontSize: '0.82rem', flexWrap: 'wrap' }}>
+            <button 
+              type="button" 
+              onClick={() => setActiveLegalTab('dpdp')} 
+              style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+            >
+              DPDP Privacy Notice
+            </button>
+            <button 
+              type="button" 
+              onClick={() => setActiveLegalTab('terms')} 
+              style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+            >
+              Terms of Service
+            </button>
+            <button 
+              type="button" 
+              onClick={() => setActiveLegalTab('rights')} 
+              style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+            >
+              Data Principal Rights
+            </button>
+            <button 
+              type="button" 
+              onClick={() => setActiveLegalTab('grievance')} 
+              style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+            >
+              Grievance Officer
+            </button>
+          </div>
         </div>
 
         {/* Giant Bottom Watermark Typography */}
@@ -110,6 +142,13 @@ export const LaundyFooter = ({ onNavClick, onOpenBooking }) => {
           </motion.h1>
         </div>
       </div>
+
+      {/* DPDP Act 2023 Statutory Legal Modal */}
+      <LegalModal 
+        isOpen={Boolean(activeLegalTab)}
+        initialTab={activeLegalTab || 'dpdp'}
+        onClose={() => setActiveLegalTab(null)}
+      />
     </footer>
   );
 };

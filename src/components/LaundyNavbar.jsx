@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, ArrowRight, ArrowUpRight, Sparkles, User, LogOut, Clock, ShoppingBag } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-export const LaundyNavbar = ({ activeTab, setActiveTab, onOpenBooking }) => {
+export const LaundyNavbar = ({ activeTab, setActiveTab, onOpenBooking, onOpenApp }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [timeString, setTimeString] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
@@ -151,7 +151,7 @@ export const LaundyNavbar = ({ activeTab, setActiveTab, onOpenBooking }) => {
               {isAuthenticated ? (
                 <motion.button 
                   className="laundy-google-user-pill" 
-                  onClick={openLoginModal}
+                  onClick={onOpenApp || openLoginModal}
                   initial={false}
                   animate={{
                     backgroundColor: isScrolled ? 'rgba(10, 10, 10, 0.08)' : 'rgba(255, 255, 255, 0.2)',
@@ -159,9 +159,22 @@ export const LaundyNavbar = ({ activeTab, setActiveTab, onOpenBooking }) => {
                   }}
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.96 }}
+                  title="Open Poshak Customer Dashboard"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}
                 >
                   <img src={user.picture} alt={user.name} className="laundy-user-avatar" />
                   <span className="laundy-user-name">{user.name.split(' ')[0]}</span>
+                  <span style={{
+                    fontSize: '0.68rem',
+                    background: '#fa5929',
+                    color: '#ffffff',
+                    padding: '0.12rem 0.45rem',
+                    borderRadius: '9999px',
+                    fontWeight: '800',
+                    letterSpacing: '0.04em'
+                  }}>
+                    APP
+                  </span>
                 </motion.button>
               ) : (
                 <motion.button 
@@ -287,11 +300,46 @@ export const LaundyNavbar = ({ activeTab, setActiveTab, onOpenBooking }) => {
                   </div>
 
                   <div className="drawer-cta-block">
+                    {isAuthenticated && (
+                      <motion.button 
+                        style={{
+                          width: '100%',
+                          background: '#fa5929',
+                          color: '#ffffff',
+                          padding: '0.85rem 1.25rem',
+                          borderRadius: '9999px',
+                          fontWeight: '800',
+                          fontSize: '0.92rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.5rem',
+                          cursor: 'pointer',
+                          boxShadow: '0 6px 20px rgba(250, 89, 41, 0.3)',
+                          marginBottom: '0.75rem'
+                        }}
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          onOpenApp && onOpenApp();
+                        }}
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                      >
+                        <Sparkles size={16} />
+                        <span>Open Customer Dashboard</span>
+                        <ArrowRight size={16} />
+                      </motion.button>
+                    )}
+
                     <motion.button 
                       className="drawer-schedule-btn"
                       onClick={() => {
                         setIsMenuOpen(false);
-                        onOpenBooking();
+                        if (isAuthenticated && onOpenApp) {
+                          onOpenApp();
+                        } else {
+                          onOpenBooking();
+                        }
                       }}
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}

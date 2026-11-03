@@ -3,6 +3,9 @@ import ReactDOM from 'react-dom/client';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import App from './App';
 import './index.css';
+import { registerServiceWorker } from './lib/push';
+
+registerServiceWorker();
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '474998251635-744ai71bof86c7cpqhseakcngqgo9fn8.apps.googleusercontent.com';
 

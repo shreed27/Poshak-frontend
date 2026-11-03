@@ -8,7 +8,7 @@ export const LaundyHero = ({ onScrollToServices, onOpenBooking }) => {
       {/* Main Full-Bleed Background Image */}
       <div className="laundy-hero-bg-wrapper">
         <motion.img 
-          src="/hero-specialist.jpg" 
+          src="https://images.unsplash.com/photo-1556740758-90de374c12ad?auto=format&fit=crop&w=1920&q=85" 
           alt="Poshak Master Garment Specialist" 
           className="laundy-hero-bg-img"
           initial={{ scale: 1.05, opacity: 0 }}
@@ -45,7 +45,7 @@ export const LaundyHero = ({ onScrollToServices, onOpenBooking }) => {
             />
           </div>
           <p className="laundy-hero-left-quote">
-            Poshak Care made managing our daily pickups effortless across Bengaluru. From doorstep collection to express delivery, everything runs on time.
+            Poshak Care made managing our daily pickups effortless. From scheduling to delivery, everything runs on time. It's the most reliable system we've used for our fabrics.
           </p>
         </motion.div>
 
@@ -75,14 +75,14 @@ export const LaundyHero = ({ onScrollToServices, onOpenBooking }) => {
           </div>
         </motion.div>
 
-        {/* Huge Bottom Watermark "Poshak" */}
+        {/* Huge Bottom Watermark "poshak" */}
         <motion.div 
           className="laundy-giant-watermark-wrap"
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
         >
-          <span className="laundy-giant-watermark-text">Poshak</span>
+          <span className="laundy-giant-watermark-text">poshak</span>
         </motion.div>
       </div>
     </section>

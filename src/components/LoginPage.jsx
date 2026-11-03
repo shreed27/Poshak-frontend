@@ -17,9 +17,11 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useGoogleLogin, GoogleLogin } from '@react-oauth/google';
+import { supabase } from '../lib/supabase';
+import { LegalModal } from './LegalModals';
 
 export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
-  const { user, isAuthenticated, logout, loginWithGooglePayload, loginDemo } = useAuth();
+  const { user, isAuthenticated, logout, loginWithGooglePayload, loginDemo, loginWithGoogleIdToken, loginWithGoogleOAuth } = useAuth();
   const [authMethod, setAuthMethod] = useState('google'); // 'google' | 'phone' | 'email'
   const [phone, setPhone] = useState('');
   const [otpSent, setOtpSent] = useState(false);
@@ -28,6 +30,9 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState(null);
+  const [dpdpConsent, setDpdpConsent] = useState(true);
+  const [activeLegalModal, setActiveLegalModal] = useState(null);
+
 
   // Authenticated Member Direct Pickup State
   const [selectedService, setSelectedService] = useState(
@@ -109,6 +114,10 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
 
   const handlePhoneSubmit = (e) => {
     e.preventDefault();
+    if (!dpdpConsent) {
+      alert('Please check the box to agree to the Terms of Service and DPDP Act 2023 Privacy Notice.');
+      return;
+    }
     if (!otpSent) {
       if (phone.length >= 10) {
         setOtpSent(true);
@@ -125,6 +134,10 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
 
   const handleEmailSubmit = (e) => {
     e.preventDefault();
+    if (!dpdpConsent) {
+      alert('Please check the box to agree to the Terms of Service and DPDP Act 2023 Privacy Notice.');
+      return;
+    }
     if (email) {
       setLoading(true);
       setTimeout(() => {
@@ -134,6 +147,7 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
       }, 450);
     }
   };
+
 
   return (
     <div className="login-page-root">
@@ -344,6 +358,10 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
                     </button>
 
                     <div className="member-account-footer-row">
+                      <button type="button" onClick={() => onLoginSuccess && onLoginSuccess()} className="member-sub-btn" style={{ color: '#fa5929', fontWeight: '700' }}>
+                        <span>⚡ Go to My Dashboard</span>
+                      </button>
+                      <span>•</span>
                       <button type="button" onClick={onBackToHome} className="member-sub-btn">
                         ← Back to Home
                       </button>
@@ -370,9 +388,30 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
                     <MapPin size={16} className="text-orange" />
                     <span>{fullAddress}</span>
                   </div>
-                  <button className="login-submit-btn-orange" onClick={onBackToHome}>
-                    <span>Return to Poshak Home</span>
+                  <button 
+                    className="login-submit-btn-orange" 
+                    onClick={() => onLoginSuccess && onLoginSuccess()}
+                    style={{ marginBottom: '0.65rem' }}
+                  >
+                    <span>Track Live in Customer Dashboard</span>
                     <ArrowRight size={16} />
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={onBackToHome}
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      color: 'rgba(255,255,255,0.85)',
+                      padding: '0.65rem 1rem',
+                      borderRadius: '9999px',
+                      fontSize: '0.85rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      width: '100%'
+                    }}
+                  >
+                    <span>Return to Public Home</span>
                   </button>
                 </div>
               )
@@ -418,6 +457,53 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
                   </button>
                 </div>
 
+                {/* DPDP Act, 2023 Statutory Consent & Terms Checkbox */}
+                <div style={{
+                  background: dpdpConsent ? 'rgba(250, 89, 41, 0.05)' : '#fef2f2',
+                  border: '1.5px solid',
+                  borderColor: dpdpConsent ? 'rgba(250, 89, 41, 0.2)' : '#f87171',
+                  borderRadius: '14px',
+                  padding: '0.75rem 0.95rem',
+                  marginBottom: '1rem',
+                  fontSize: '0.75rem',
+                  color: '#374151',
+                  lineHeight: 1.45,
+                  transition: 'all 0.2s ease'
+                }}>
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', cursor: 'pointer' }}>
+                    <input 
+                      type="checkbox"
+                      checked={dpdpConsent}
+                      onChange={(e) => setDpdpConsent(e.target.checked)}
+                      style={{ marginTop: '2px', accentColor: '#fa5929', width: '16px', height: '16px', flexShrink: 0 }}
+                    />
+                    <span>
+                      I agree to Poshak's{' '}
+                      <button 
+                        type="button" 
+                        onClick={() => setActiveLegalModal('terms')} 
+                        style={{ color: '#fa5929', background: 'transparent', border: 'none', padding: 0, fontWeight: '800', textDecoration: 'underline', cursor: 'pointer' }}
+                      >
+                        Terms of Service
+                      </button>{' '}
+                      and give explicit consent to personal data processing under India's{' '}
+                      <button 
+                        type="button" 
+                        onClick={() => setActiveLegalModal('dpdp')} 
+                        style={{ color: '#fa5929', background: 'transparent', border: 'none', padding: 0, fontWeight: '800', textDecoration: 'underline', cursor: 'pointer' }}
+                      >
+                        DPDP Act, 2023 Privacy Notice
+                      </button>.
+                    </span>
+                  </label>
+                  {!dpdpConsent && (
+                    <div style={{ color: '#dc2626', fontSize: '0.72rem', fontWeight: '700', marginTop: '0.35rem' }}>
+                      * Consent required under India's DPDP Act, 2023 to proceed with booking.
+                    </div>
+                  )}
+                </div>
+
+
                 {/* Tab 1: Google 1-Click Login */}
                 {authMethod === 'google' && (
                   <div className="login-method-body">
@@ -435,6 +521,7 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
                                 .join('')
                             );
                             const profile = JSON.parse(jsonPayload);
+                            loginWithGoogleIdToken(token); // creates the Supabase session so orders can be saved
                             loginWithGooglePayload({
                               name: profile.name || profile.given_name || 'Google User',
                               email: profile.email || 'user@gmail.com',
@@ -461,7 +548,14 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
 
                     <button 
                       className="google-action-btn hover-lift"
-                      onClick={() => triggerGoogleLogin()}
+                      onClick={() => {
+                        if (!dpdpConsent) {
+                          alert('Please check the box to agree to the Terms of Service and DPDP Act 2023 Privacy Notice.');
+                          return;
+                        }
+                        if (supabase) { loginWithGoogleOAuth(); return; }
+                        triggerGoogleLogin();
+                      }}
                       disabled={loading}
                       style={{ marginTop: '0.75rem' }}
                     >
@@ -486,7 +580,13 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
                         <button 
                           type="button" 
                           className="fast-chip-btn"
-                          onClick={() => handleQuickDemoLogin('Ananya Rao (Indiranagar)', 'ananya@poshak.in')}
+                          onClick={() => {
+                            if (!dpdpConsent) {
+                              alert('Please check the box to agree to the Terms of Service and DPDP Act 2023 Privacy Notice.');
+                              return;
+                            }
+                            handleQuickDemoLogin('Ananya Rao (Indiranagar)', 'ananya@poshak.in');
+                          }}
                         >
                           <UserCheck size={13} />
                           <span>Ananya (Indiranagar)</span>
@@ -494,7 +594,13 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
                         <button 
                           type="button" 
                           className="fast-chip-btn"
-                          onClick={() => handleQuickDemoLogin('Rohan Sharma (HSR)', 'rohan@poshak.in')}
+                          onClick={() => {
+                            if (!dpdpConsent) {
+                              alert('Please check the box to agree to the Terms of Service and DPDP Act 2023 Privacy Notice.');
+                              return;
+                            }
+                            handleQuickDemoLogin('Rohan Sharma (HSR)', 'rohan@poshak.in');
+                          }}
                         >
                           <UserCheck size={13} />
                           <span>Rohan (HSR Layout)</span>
@@ -608,6 +714,13 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
           </div>
         </motion.div>
       </div>
+
+      {/* DPDP Act, 2023 Statutory Legal Modal */}
+      <LegalModal 
+        isOpen={Boolean(activeLegalModal)} 
+        initialTab={activeLegalModal || 'dpdp'} 
+        onClose={() => setActiveLegalModal(null)} 
+      />
     </div>
   );
 };

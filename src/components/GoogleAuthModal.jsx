@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import { X, ShieldCheck, Sparkles, Check, ArrowRight } from 'lucide-react';
+import { X, ShieldCheck, Sparkles, Check, ArrowRight, Shield } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
+import { LegalModal } from './LegalModals';
 
 export const GoogleAuthModal = () => {
-  const { isAuthModalOpen, closeLoginModal, loginWithGooglePayload, loginDemo } = useAuth();
+  const { isAuthModalOpen, closeLoginModal, loginWithGooglePayload, loginDemo, loginWithGoogleIdToken } = useAuth();
   const [customName, setCustomName] = useState('Shreed Shrivastava');
   const [customEmail, setCustomEmail] = useState('shreed@poshak.in');
   const [isCustomMode, setIsCustomMode] = useState(false);
+  const [dpdpConsent, setDpdpConsent] = useState(true);
+  const [activeLegalTab, setActiveLegalTab] = useState(null);
 
   if (!isAuthModalOpen) return null;
 
@@ -15,6 +18,10 @@ export const GoogleAuthModal = () => {
   const hasValidClientId = clientId && !clientId.includes('your-google-oauth-client-id');
 
   const handleGoogleSuccess = (credentialResponse) => {
+    if (!dpdpConsent) {
+      alert('Please check the box to agree to the Terms of Service and DPDP Act 2023 Privacy Notice.');
+      return;
+    }
     try {
       // Decode JWT token payload (base64)
       const token = credentialResponse.credential;
@@ -27,6 +34,7 @@ export const GoogleAuthModal = () => {
           .join('')
       );
       const profile = JSON.parse(jsonPayload);
+      loginWithGoogleIdToken(token);
       loginWithGooglePayload({
         name: profile.name,
         email: profile.email,
@@ -45,6 +53,10 @@ export const GoogleAuthModal = () => {
 
   const handleCustomLogin = (e) => {
     e.preventDefault();
+    if (!dpdpConsent) {
+      alert('Please check the box to agree to the Terms of Service and DPDP Act 2023 Privacy Notice.');
+      return;
+    }
     if (customEmail) {
       loginDemo(customName || 'Poshak Member', customEmail);
     }
@@ -69,6 +81,46 @@ export const GoogleAuthModal = () => {
         </div>
 
         <div className="auth-modal-body">
+          {/* DPDP Act 2023 Statutory Consent Checkbox */}
+          <div style={{
+            background: dpdpConsent ? 'rgba(250, 89, 41, 0.05)' : '#fef2f2',
+            border: '1px solid',
+            borderColor: dpdpConsent ? 'rgba(250, 89, 41, 0.2)' : '#f87171',
+            borderRadius: '12px',
+            padding: '0.7rem 0.85rem',
+            marginBottom: '1rem',
+            display: 'flex',
+            gap: '0.65rem',
+            alignItems: 'flex-start',
+            textAlign: 'left'
+          }}>
+            <input 
+              type="checkbox"
+              id="google-modal-dpdp-checkbox"
+              checked={dpdpConsent}
+              onChange={(e) => setDpdpConsent(e.target.checked)}
+              style={{ marginTop: '0.15rem', accentColor: '#fa5929', width: '16px', height: '16px', cursor: 'pointer' }}
+            />
+            <label htmlFor="google-modal-dpdp-checkbox" style={{ fontSize: '0.74rem', color: '#4b5563', lineHeight: '1.4', cursor: 'pointer', margin: 0 }}>
+              I agree to the{' '}
+              <button 
+                type="button" 
+                onClick={() => setActiveLegalTab('terms')}
+                style={{ background: 'none', border: 'none', padding: 0, color: '#fa5929', fontWeight: '700', textDecoration: 'underline', cursor: 'pointer' }}
+              >
+                Terms of Service
+              </button>
+              {' '}and acknowledge India's{' '}
+              <button 
+                type="button" 
+                onClick={() => setActiveLegalTab('dpdp')}
+                style={{ background: 'none', border: 'none', padding: 0, color: '#fa5929', fontWeight: '700', textDecoration: 'underline', cursor: 'pointer' }}
+              >
+                DPDP Act, 2023 Privacy Notice
+              </button>.
+            </label>
+          </div>
+
           {/* Real Google OAuth Button (if GCP Client ID is active) */}
           {hasValidClientId ? (
             <div className="google-oauth-real-wrapper">
@@ -87,7 +139,13 @@ export const GoogleAuthModal = () => {
             <div className="google-simulated-login-block">
               <button 
                 className="google-one-tap-btn hover-lift"
-                onClick={() => loginDemo(customName, customEmail)}
+                onClick={() => {
+                  if (!dpdpConsent) {
+                    alert('Please check the box to agree to the Terms of Service and DPDP Act 2023 Privacy Notice.');
+                    return;
+                  }
+                  loginDemo(customName, customEmail);
+                }}
               >
                 <svg className="google-icon-svg" viewBox="0 0 24 24" width="22" height="22">
                   <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
@@ -155,6 +213,13 @@ export const GoogleAuthModal = () => {
           </div>
         </div>
       </div>
+
+      {/* DPDP Act 2023 Statutory Legal Modal */}
+      <LegalModal 
+        isOpen={Boolean(activeLegalTab)}
+        initialTab={activeLegalTab || 'dpdp'}
+        onClose={() => setActiveLegalTab(null)}
+      />
     </div>
   );
 };

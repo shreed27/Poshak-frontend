@@ -1,0 +1,273 @@
+/* Location picker, live tracking map, nearby stores, toasts */
+
+.psk-spin { animation: psk-spin 0.9s linear infinite; }
+@keyframes psk-spin { to { transform: rotate(360deg); } }
+
+/* ---------- Location modal ---------- */
+.psk-loc-modal {
+  width: min(100%, 520px);
+  max-height: min(92vh, 760px);
+  background: #fff;
+  border-radius: 22px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+}
+.psk-loc-head { display: flex; align-items: center; justify-content: space-between; padding: 1.1rem 1.25rem; border-bottom: 1px solid #f0f0f0; }
+.psk-loc-head h3 { font-size: 1.1rem; font-weight: 800; margin: 0; }
+.psk-loc-body { padding: 1.1rem 1.25rem 1.25rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.85rem; }
+.psk-icon-btn { background: #f3f4f6; border: none; width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; color: #444; }
+.psk-icon-btn:hover { background: #e5e7eb; }
+
+.psk-search { display: flex; align-items: center; gap: 0.6rem; border: 1.5px solid #e5e7eb; border-radius: 12px; padding: 0.7rem 0.85rem; color: #6b7280; }
+.psk-search:focus-within { border-color: #fa5929; }
+.psk-search input { flex: 1; border: none; outline: none; font-size: 0.92rem; background: transparent; color: #111; }
+
+.psk-current-btn { display: flex; align-items: center; gap: 0.85rem; text-align: left; background: rgba(250, 89, 41, 0.06); border: 1.5px dashed rgba(250, 89, 41, 0.5); color: #fa5929; padding: 0.85rem 1rem; border-radius: 14px; cursor: pointer; }
+.psk-current-btn:disabled { opacity: 0.7; cursor: progress; }
+.psk-current-btn strong { display: block; font-size: 0.92rem; font-weight: 800; }
+.psk-current-btn span { display: block; font-size: 0.75rem; color: #6b7280; margin-top: 2px; }
+
+.psk-note { display: flex; gap: 0.5rem; align-items: flex-start; font-size: 0.8rem; padding: 0.7rem 0.85rem; border-radius: 10px; line-height: 1.4; }
+.psk-note-warn { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+.psk-note svg { flex-shrink: 0; margin-top: 1px; }
+
+.psk-list-title { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #9ca3af; margin-top: 0.35rem; }
+.psk-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.psk-row { display: flex; align-items: center; gap: 0.7rem; text-align: left; background: #fff; border: 1.5px solid #ebebeb; border-radius: 12px; padding: 0.7rem 0.85rem; cursor: pointer; width: 100%; }
+.psk-row:hover { border-color: #fa5929; }
+.psk-row svg { flex-shrink: 0; color: #fa5929; }
+.psk-row strong { display: block; font-size: 0.88rem; font-weight: 800; color: #111; }
+.psk-row span { display: block; font-size: 0.76rem; color: #686b78; margin-top: 1px; line-height: 1.35; }
+.psk-row-saved { padding: 0; align-items: stretch; gap: 0; border-color: #ebebeb; }
+.psk-row-saved.active { border-color: #fa5929; background: rgba(250, 89, 41, 0.04); }
+.psk-row-main { display: flex; align-items: center; gap: 0.7rem; flex: 1; background: transparent; border: none; text-align: left; padding: 0.7rem 0.85rem; cursor: pointer; }
+.psk-row-main > div { flex: 1; min-width: 0; }
+.psk-row-saved .psk-icon-btn { align-self: center; margin-right: 0.6rem; }
+
+.psk-empty { font-size: 0.82rem; color: #6b7280; padding: 0.5rem 0; }
+.psk-hint { font-size: 0.76rem; color: #6b7280; margin: -0.35rem 0 0; }
+
+.psk-loc-body > * { flex-shrink: 0; }
+.psk-pinmap { height: 220px; border-radius: 14px; overflow: hidden; border: 1px solid #e5e7eb; z-index: 0; }
+.psk-resolved { display: flex; gap: 0.6rem; align-items: flex-start; background: #f9fafb; border-radius: 12px; padding: 0.75rem 0.85rem; }
+.psk-resolved > div { flex: 1; min-width: 0; font-size: 0.8rem; color: #555; line-height: 1.35; }
+.psk-resolved strong { display: block; color: #111; font-size: 0.9rem; }
+.psk-link { background: transparent; border: none; color: #fa5929; font-weight: 800; font-size: 0.76rem; display: inline-flex; align-items: center; gap: 0.25rem; cursor: pointer; white-space: nowrap; }
+
+.psk-field { display: flex; flex-direction: column; gap: 0.3rem; flex: 1; }
+.psk-field label { font-size: 0.76rem; font-weight: 700; color: #555; }
+.psk-field input { border: 1.5px solid #e5e7eb; border-radius: 10px; padding: 0.65rem 0.8rem; font-size: 0.9rem; outline: none; background: #fafafa; }
+.psk-field input:focus { border-color: #fa5929; background: #fff; }
+.psk-field-row { display: flex; gap: 0.75rem; }
+
+.psk-chips { display: flex; gap: 0.5rem; }
+.psk-chip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.9rem; border-radius: 9999px; border: 1.5px solid #e5e7eb; background: #fff; font-size: 0.8rem; font-weight: 700; color: #444; cursor: pointer; }
+.psk-chip.on { background: #fa5929; border-color: #fa5929; color: #fff; }
+
+.psk-actions { display: flex; gap: 0.75rem; margin-top: 0.25rem; }
+.psk-btn-primary { background: #fa5929; color: #fff; border: none; padding: 0.8rem 1.4rem; border-radius: 12px; font-weight: 800; font-size: 0.92rem; cursor: pointer; flex: 1; box-shadow: 0 6px 18px rgba(250, 89, 41, 0.28); }
+.psk-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+.psk-btn-ghost { background: #fff; color: #444; border: 1.5px solid #e5e7eb; padding: 0.8rem 1.2rem; border-radius: 12px; font-weight: 700; cursor: pointer; }
+
+/* ---------- Map markers ---------- */
+.psk-marker { background: transparent; border: none; }
+.psk-pin { width: 40px; height: 40px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); border: 2px solid #fff; }
+.psk-pin span { transform: rotate(45deg); font-size: 18px; line-height: 1; }
+.psk-pin-home { background: #fa5929; }
+.psk-pin-hub { background: #0f172a; }
+.psk-pin-picker { background: #fa5929; width: 34px; height: 34px; }
+.psk-pin-picker span { width: 10px; height: 10px; background: #fff; border-radius: 50%; }
+.psk-rider { width: 44px; height: 44px; border-radius: 50%; background: #fff; border: 3px solid #fa5929; display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3); animation: psk-pulse 1.8s ease-out infinite; }
+@keyframes psk-pulse { 0% { box-shadow: 0 0 0 0 rgba(250, 89, 41, 0.55); } 70% { box-shadow: 0 0 0 14px rgba(250, 89, 41, 0); } 100% { box-shadow: 0 0 0 0 rgba(250, 89, 41, 0); } }
+
+.psk-trackmap, .psk-map-fallback { border-radius: 16px; overflow: hidden; border: 1px solid #e5e7eb; z-index: 0; }
+.psk-map-fallback { display: flex; align-items: center; justify-content: center; background: #f3f4f6; color: #6b7280; font-size: 0.85rem; }
+
+/* ---------- Active order card ---------- */
+.psk-active-card { background: #fff; border: 1.5px solid #fa5929; border-radius: 22px; padding: 1.4rem; margin-bottom: 2rem; box-shadow: 0 8px 24px rgba(250, 89, 41, 0.08); }
+.psk-active-top { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; flex-wrap: wrap; margin-bottom: 0.9rem; }
+.psk-active-top h3 { font-size: 1.3rem; font-weight: 800; margin: 0.5rem 0 0.2rem; }
+.psk-live-pill { display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(250, 89, 41, 0.1); color: #fa5929; font-size: 0.74rem; font-weight: 800; padding: 0.25rem 0.65rem; border-radius: 9999px; text-transform: uppercase; }
+.psk-live-dot { width: 7px; height: 7px; border-radius: 50%; background: #fa5929; animation: psk-blink 1.2s infinite; }
+@keyframes psk-blink { 50% { opacity: 0.25; } }
+.psk-eta { display: flex; align-items: center; gap: 0.35rem; color: #16a34a; font-weight: 700; font-size: 0.9rem; margin: 0; }
+.psk-otp { background: #0a0a0a; color: #fff; border-radius: 12px; padding: 0.55rem 0.9rem; text-align: center; }
+.psk-otp span { display: block; font-size: 0.62rem; letter-spacing: 0.08em; opacity: 0.7; }
+.psk-otp b { font-size: 1.4rem; letter-spacing: 0.2em; }
+.psk-overall { height: 5px; border-radius: 9999px; background: #f1f1f1; margin-bottom: 1rem; overflow: hidden; }
+.psk-overall div { height: 100%; background: linear-gradient(90deg, #fa5929, #f59e0b); transition: width 1s linear; }
+.psk-demo-note { font-size: 0.7rem; color: #9ca3af; margin: 0.4rem 0 0; }
+.psk-order-grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 0.85rem; margin-top: 0.5rem; }
+.psk-rider-card { display: flex; align-items: center; gap: 0.75rem; background: #f9fafb; border-radius: 14px; padding: 0.85rem; }
+.psk-call-btn { width: 38px; height: 38px; border-radius: 50%; background: #16a34a; color: #fff; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.psk-detail-card { background: #f9fafb; border-radius: 14px; padding: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.psk-detail-line { display: flex; gap: 0.5rem; font-size: 0.8rem; color: #444; line-height: 1.35; }
+.psk-detail-line svg { flex-shrink: 0; color: #fa5929; margin-top: 2px; }
+.psk-photos { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.85rem; }
+.psk-photos img { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; border: 1px solid #e5e7eb; }
+.psk-cancel-btn { margin-top: 1rem; display: inline-flex; align-items: center; gap: 0.4rem; background: #fff; color: #dc2626; border: 1.5px solid #fecaca; padding: 0.55rem 1rem; border-radius: 10px; font-weight: 700; font-size: 0.82rem; cursor: pointer; }
+.psk-cancel-btn:hover { background: #fef2f2; }
+.psk-small { font-size: 0.78rem; color: #686b78; }
+.psk-empty-card { background: #fff; border-radius: 20px; border: 1px solid #ebebeb; padding: 2.5rem 1.5rem; text-align: center; margin-bottom: 2rem; }
+.psk-empty-card h3 { font-size: 1.15rem; font-weight: 800; margin: 0 0 0.35rem; }
+.psk-empty-card p { font-size: 0.84rem; color: #686b78; margin: 0 0 1.25rem; }
+.psk-empty-card .psk-btn-primary { flex: none; padding: 0.65rem 1.6rem; border-radius: 9999px; }
+.psk-past-title { font-size: 1.2rem; font-weight: 800; margin: 0 0 1rem; color: #111; }
+.psk-past-card { background: #fff; border: 1px solid #ebebeb; border-radius: 16px; padding: 1.15rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+.psk-past-card h4 { font-size: 1rem; font-weight: 800; color: #111; margin: 0; }
+.psk-tag { font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 6px; }
+.psk-tag-green { background: #ecfdf5; color: #059669; }
+.psk-tag-red { background: #fef2f2; color: #dc2626; }
+.psk-stars { display: flex; gap: 2px; }
+.psk-stars button { background: transparent; border: none; padding: 1px; cursor: pointer; }
+.psk-stars button:disabled { cursor: default; }
+.psk-reorder-btn { background: #fff; border: 1.5px solid #fa5929; color: #fa5929; padding: 0.45rem 1.15rem; border-radius: 8px; font-size: 0.84rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 0.35rem; }
+
+/* ---------- Nearby stores ---------- */
+.psk-stores { margin: 2rem 0 1rem; }
+.psk-stores-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.9rem; }
+.psk-sub { font-size: 0.82rem; color: #686b78; margin: 0.2rem 0 0; }
+.psk-stores-row { display: flex; gap: 0.85rem; overflow-x: auto; padding-bottom: 0.5rem; scroll-snap-type: x proximity; }
+.psk-store-card { position: relative; min-width: 260px; max-width: 300px; flex: 0 0 auto; scroll-snap-align: start; display: flex; gap: 0.75rem; background: #fff; border: 1px solid #ebebeb; border-radius: 16px; padding: 1rem; }
+.psk-store-icon { width: 38px; height: 38px; border-radius: 12px; background: rgba(250, 89, 41, 0.1); color: #fa5929; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.psk-store-body { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.psk-store-body strong { font-size: 0.92rem; font-weight: 800; color: #111; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.psk-store-kind { font-size: 0.74rem; color: #686b78; }
+.psk-store-meta { display: flex; gap: 0.75rem; font-size: 0.76rem; color: #374151; font-weight: 600; margin-top: 0.2rem; }
+.psk-store-meta span { display: inline-flex; align-items: center; gap: 0.25rem; }
+.psk-store-open { font-size: 0.7rem; color: #16a34a; }
+.psk-store-call { font-size: 0.72rem; color: #fa5929; display: inline-flex; align-items: center; gap: 0.25rem; text-decoration: none; font-weight: 700; }
+.psk-store-badge { position: absolute; top: 0.6rem; right: 0.7rem; background: #16a34a; color: #fff; font-size: 0.62rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: 9999px; }
+.psk-attrib { font-size: 0.68rem; color: #9ca3af; margin: 0.25rem 0 0; }
+
+/* ---------- Banner + toast ---------- */
+.psk-away-banner { max-width: 1180px; margin: 0.75rem auto 0; display: flex; align-items: center; gap: 0.65rem; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 0.65rem 1rem; border-radius: 12px; font-size: 0.82rem; width: calc(100% - 2.5rem); }
+.psk-away-banner button { background: #2563eb; color: #fff; border: none; border-radius: 8px; padding: 0.35rem 0.8rem; font-weight: 700; font-size: 0.78rem; cursor: pointer; margin-left: auto; }
+.psk-away-banner .psk-banner-x { background: transparent; color: #1e40af; padding: 0.2rem; margin-left: 0; }
+.psk-toast { position: fixed; top: 76px; left: 50%; transform: translateX(-50%); z-index: 2000; background: #0a0a0a; color: #fff; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.1rem; border-radius: 9999px; font-size: 0.84rem; font-weight: 600; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); max-width: calc(100vw - 2rem); }
+.psk-toast svg { color: #4ade80; flex-shrink: 0; }
+
+@media (max-width: 640px) {
+  .psk-order-grid { grid-template-columns: 1fr; }
+  .psk-field-row { flex-direction: column; }
+  .psk-active-card { padding: 1rem; }
+  .psk-active-top h3 { font-size: 1.1rem; }
+  .psk-away-banner { flex-wrap: wrap; }
+}
+
+.psk-area-chip { display: flex; align-items: center; gap: 0.45rem; background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; border-radius: 10px; padding: 0.55rem 0.8rem; font-size: 0.8rem; }
+.psk-area-chip svg { color: #fa5929; flex-shrink: 0; }
+
+/* ---------- Payment choice ---------- */
+.psk-paychoice { display: flex; flex-direction: column; gap: 0.5rem; margin: 0 0 1rem; }
+.psk-paychoice-title { font-size: 0.84rem; font-weight: 800; color: #111; }
+.psk-pay-opt { display: flex; gap: 0.75rem; align-items: flex-start; text-align: left; background: #fff; border: 1.5px solid #e5e7eb; border-radius: 14px; padding: 0.8rem 0.95rem; cursor: pointer; }
+.psk-pay-opt.on { border-color: #fa5929; background: rgba(250, 89, 41, 0.05); }
+.psk-pay-opt:disabled { opacity: 0.55; cursor: not-allowed; }
+.psk-pay-opt svg { color: #fa5929; flex-shrink: 0; margin-top: 2px; }
+.psk-pay-opt strong { display: block; font-size: 0.9rem; color: #111; }
+.psk-pay-opt span { display: block; font-size: 0.76rem; color: #686b78; margin-top: 2px; line-height: 1.35; }
+
+/* ---------- Bill + payment card on an active order ---------- */
+.psk-billbox { background: #f9fafb; border-radius: 14px; padding: 0.9rem 1rem; margin-top: 0.85rem; }
+.psk-billbox h4 { margin: 0 0 0.5rem; font-size: 0.86rem; font-weight: 800; }
+.psk-bill-row { display: flex; justify-content: space-between; font-size: 0.82rem; color: #444; padding: 0.15rem 0; gap: 0.75rem; }
+.psk-bill-row.total { border-top: 1px dashed #d1d5db; margin-top: 0.4rem; padding-top: 0.5rem; font-weight: 800; color: #111; font-size: 0.92rem; }
+.psk-bill-note { font-size: 0.74rem; color: #686b78; margin: 0.5rem 0 0; line-height: 1.4; }
+.psk-paid-pill { display: inline-block; background: #ecfdf5; color: #059669; font-weight: 800; font-size: 0.72rem; padding: 0.15rem 0.55rem; border-radius: 9999px; }
+.psk-due-pill { display: inline-block; background: #fff7ed; color: #c2410c; font-weight: 800; font-size: 0.72rem; padding: 0.15rem 0.55rem; border-radius: 9999px; }
+.psk-paynow { margin-top: 0.7rem; width: 100%; padding: 0.75rem; border: none; border-radius: 12px; background: #fa5929; color: #fff; font-weight: 800; font-size: 0.92rem; cursor: pointer; }
+.psk-paynow:disabled { opacity: 0.6; cursor: wait; }
+.psk-handover { display: flex; gap: 0.6rem; align-items: flex-start; background: #fffbeb; border: 1px solid #fde68a; color: #92400e; border-radius: 12px; padding: 0.7rem 0.85rem; font-size: 0.78rem; margin-top: 0.85rem; line-height: 1.4; }
+.psk-handover svg { flex-shrink: 0; margin-top: 1px; }
+
+/* ---------- Slot picker + coupon ---------- */
+.psk-slots { margin-bottom: 1.1rem; }
+.psk-slots-title { display: flex; align-items: center; gap: 0.35rem; font-size: 0.82rem; font-weight: 800; color: #111; margin-bottom: 0.5rem; }
+.psk-day-tabs { display: flex; gap: 0.4rem; margin-bottom: 0.55rem; flex-wrap: wrap; }
+.psk-day-tabs button { border: 1.5px solid #e5e7eb; background: #fff; border-radius: 9999px; padding: 0.3rem 0.85rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; }
+.psk-day-tabs button.on { background: #111; color: #fff; border-color: #111; }
+.psk-slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 0.45rem; }
+.psk-slot { display: flex; flex-direction: column; align-items: center; gap: 1px; border: 1.5px solid #e5e7eb; background: #fff; border-radius: 12px; padding: 0.5rem 0.3rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; }
+.psk-slot small { font-size: 0.66rem; color: #b45309; min-height: 0.9em; }
+.psk-slot.on { border-color: #fa5929; background: rgba(250, 89, 41, 0.07); color: #fa5929; }
+.psk-slot:disabled { opacity: 0.45; cursor: not-allowed; background: #f3f4f6; }
+.psk-slot:disabled small { color: #dc2626; }
+.psk-slot-warn { color: #b91c1c; font-size: 0.78rem; margin: 0.4rem 0 0; }
+.psk-slot-picked { color: #16a34a; font-size: 0.78rem; margin: 0.4rem 0 0; font-weight: 700; }
+.psk-coupon { display: flex; align-items: center; gap: 0.5rem; border: 1.5px dashed #d1d5db; border-radius: 12px; padding: 0.45rem 0.6rem; margin-bottom: 0.9rem; font-size: 0.82rem; }
+.psk-coupon svg { color: #fa5929; flex-shrink: 0; }
+.psk-coupon input { flex: 1; border: none; outline: none; font-size: 0.85rem; background: transparent; letter-spacing: 0.04em; font-weight: 700; }
+.psk-coupon button { border: none; background: #fa5929; color: #fff; border-radius: 8px; padding: 0.3rem 0.8rem; font-weight: 800; font-size: 0.78rem; cursor: pointer; }
+.psk-coupon button:disabled { opacity: 0.4; }
+.psk-coupon.applied { border-style: solid; border-color: #86efac; background: #f0fdf4; color: #15803d; }
+.psk-coupon.applied span { flex: 1; }
+.psk-coupon.applied button { background: transparent; color: #15803d; padding: 0.2rem; }
+
+/* ---------- Notification bell + prefs ---------- */
+.psk-bell { position: relative; }
+.psk-bell-btn { position: relative; width: 38px; height: 38px; border-radius: 50%; border: 1px solid #e5e7eb; background: #fff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: #333; }
+.psk-bell-btn.dark { background: #1f1f23; border-color: #333; color: #fff; }
+.psk-bell-dot { position: absolute; top: -4px; right: -4px; background: #fa5929; color: #fff; font-size: 0.62rem; font-weight: 800; min-width: 17px; height: 17px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; padding: 0 3px; }
+.psk-bell-scrim { position: fixed; inset: 0; z-index: 1400; }
+.psk-bell-panel { position: absolute; right: 0; top: 46px; width: min(360px, 92vw); max-height: 70vh; overflow-y: auto; background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; box-shadow: 0 16px 40px rgba(0,0,0,.18); z-index: 1401; }
+.psk-bell-head { padding: 0.8rem 1rem; font-weight: 800; border-bottom: 1px solid #f0f0f0; }
+.psk-bell-empty { padding: 1.2rem 1rem; font-size: 0.84rem; color: #6b7280; }
+.psk-bell-item { padding: 0.7rem 1rem; border-bottom: 1px solid #f5f5f5; display: flex; flex-direction: column; gap: 2px; font-size: 0.84rem; color: #111; text-align: left; }
+.psk-bell-item.new { background: rgba(250, 89, 41, 0.06); }
+.psk-bell-item span { color: #555; font-size: 0.78rem; line-height: 1.35; }
+.psk-bell-item small { color: #9ca3af; font-size: 0.68rem; }
+.psk-prefs { background: #fff; border: 1px solid #ebebeb; border-radius: 20px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; }
+.psk-prefs h3 { display: flex; align-items: center; gap: 0.4rem; margin: 0 0 0.3rem; font-size: 1.05rem; font-weight: 800; }
+.psk-prefs p { font-size: 0.8rem; color: #686b78; margin: 0 0 0.8rem; }
+.psk-pref-phone { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.76rem; font-weight: 700; color: #555; margin-bottom: 0.7rem; }
+.psk-pref-phone input { border: 1.5px solid #e5e7eb; border-radius: 10px; padding: 0.55rem 0.8rem; font-size: 0.9rem; }
+.psk-pref { display: flex; align-items: flex-start; gap: 0.55rem; font-size: 0.82rem; margin-bottom: 0.55rem; cursor: pointer; }
+.psk-pref input { margin-top: 3px; accent-color: #fa5929; }
+.psk-pref svg { color: #fa5929; margin-top: 2px; flex-shrink: 0; }
+.psk-pref-ok { color: #15803d; font-size: 0.78rem; margin: 0.5rem 0 0; }
+.psk-pref-err { color: #b91c1c; font-size: 0.78rem; margin: 0.5rem 0 0; }
+.psk-prefs .psk-btn-ghost { margin-top: 0.4rem; padding: 0.55rem 1rem; font-size: 0.8rem; }
+
+/* ---------- Wallet, help center ---------- */
+.psk-wallet { background: #fff; border: 1px solid #ebebeb; border-radius: 20px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; }
+.psk-wallet-head { display: flex; justify-content: space-between; align-items: center; }
+.psk-wallet-head span { display: flex; align-items: center; gap: 0.5rem; font-size: 1.05rem; }
+.psk-wallet-head strong { font-size: 1.4rem; font-weight: 900; }
+.psk-wallet-note { font-size: 0.78rem; color: #686b78; margin: 0.5rem 0 0.7rem; }
+.psk-ledger { display: flex; flex-direction: column; border-top: 1px solid #f0f0f0; }
+.psk-ledger-row { display: flex; justify-content: space-between; padding: 0.45rem 0; font-size: 0.82rem; border-bottom: 1px solid #f7f7f7; }
+.psk-ledger-row small { color: #9ca3af; }
+.psk-ledger-row .plus { color: #15803d; } .psk-ledger-row .minus { color: #b45309; }
+.psk-chipstat { font-size: 0.66rem; font-weight: 800; padding: 0.12rem 0.5rem; border-radius: 9999px; margin-left: 0.3rem; vertical-align: 1px; }
+.psk-policy { background: #f9fafb; border-radius: 12px; padding: 0.8rem 1rem; font-size: 0.78rem; color: #444; line-height: 1.45; }
+.psk-policy b { display: flex; align-items: center; gap: 0.3rem; margin-bottom: 0.2rem; }
+.psk-policy p { margin: 0.3rem 0 0; }
+.psk-thread { display: flex; flex-direction: column; gap: 0.45rem; margin: 0.7rem 0; max-height: 300px; overflow-y: auto; }
+.psk-msg { background: #f3f4f6; border-radius: 12px; padding: 0.5rem 0.75rem; font-size: 0.84rem; max-width: 88%; display: flex; flex-direction: column; }
+.psk-msg.customer { background: #fff1ec; align-self: flex-end; }
+.psk-msg b { font-size: 0.68rem; color: #6b7280; }
+.psk-reply { display: flex; gap: 0.5rem; }
+.psk-reply input { flex: 1; border: 1.5px solid #e5e7eb; border-radius: 10px; padding: 0.6rem 0.8rem; }
+.psk-reply button { border: none; background: #fa5929; color: #fff; border-radius: 10px; width: 42px; cursor: pointer; }
+.psk-reply button:disabled { opacity: 0.4; }
+.psk-credit { background: #f0fdf4; color: #15803d; border-radius: 10px; padding: 0.5rem 0.8rem; font-size: 0.84rem; font-weight: 700; }
+.psk-newticket { display: flex; flex-direction: column; gap: 0.8rem; }
+.psk-newticket select, .psk-newticket textarea { border: 1.5px solid #e5e7eb; border-radius: 10px; padding: 0.6rem 0.8rem; font-size: 0.9rem; font-family: inherit; }
+.psk-report-btn { margin-top: 0.8rem; background: transparent; border: none; color: #6b7280; text-decoration: underline; font-size: 0.78rem; cursor: pointer; padding: 0; }
+
+/* ---------- Referral + plans + tips ---------- */
+.psk-refplans { margin-top: 0.9rem; padding-top: 0.9rem; border-top: 1px dashed #e5e7eb; }
+.psk-refplans h4 { display: flex; align-items: center; gap: 0.35rem; margin: 0.4rem 0 0.5rem; font-size: 0.9rem; }
+.psk-plans { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 0.5rem; margin-bottom: 0.8rem; }
+.psk-plan { display: flex; flex-direction: column; align-items: center; gap: 1px; border: 1.5px solid #fed7aa; background: #fff7ed; border-radius: 14px; padding: 0.7rem 0.4rem; cursor: pointer; }
+.psk-plan b { font-size: 1.1rem; } .psk-plan span { font-size: 0.78rem; font-weight: 700; } .psk-plan small { color: #15803d; font-size: 0.7rem; font-weight: 700; }
+.psk-plan:hover { border-color: #fa5929; } .psk-plan:disabled { opacity: 0.5; }
+.psk-refbox { display: flex; align-items: center; gap: 0.5rem; }
+.psk-refbox code { background: #f3f4f6; border-radius: 10px; padding: 0.5rem 0.9rem; font-size: 1.05rem; font-weight: 800; letter-spacing: 0.12em; }
+.psk-refbox button { display: inline-flex; align-items: center; gap: 0.3rem; border: 1.5px solid #e5e7eb; background: #fff; border-radius: 10px; padding: 0.45rem 0.7rem; font-weight: 700; font-size: 0.78rem; cursor: pointer; }
+.psk-tipbar { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin-top: 0.5rem; font-size: 0.78rem; }
+.psk-tipbar button { border: 1.5px solid #e5e7eb; background: #fff; border-radius: 9999px; padding: 0.3rem 0.8rem; font-weight: 700; cursor: pointer; }
+.psk-tipbar button:hover { border-color: #fa5929; }
