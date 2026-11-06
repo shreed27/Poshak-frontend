@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { useCatalog } from '../../context/CatalogContext';
 import { L, createMap, pickerIcon } from '../main-app/mapKit';
 import { inr } from '../../lib/csv';
+import { Field, Toggle } from './ui';
 
 /* ------------------------------------------------------------------ shared bits */
 const TABS = [
@@ -37,22 +38,6 @@ const Card = ({ title, hint, actions, children, className = '' }) => (
     <header><div><h3>{title}</h3>{hint && <p className="ops-muted">{hint}</p>}</div>{actions && <div className="st-actions">{actions}</div>}</header>
     {children}
   </section>
-);
-
-const Field = ({ label, hint, prefix, suffix, children, className = '' }) => (
-  <label className={`st-field ${className}`}>
-    <span className="st-lab">{label}</span>
-    <span className="st-input">{prefix && <i>{prefix}</i>}{children}{suffix && <i>{suffix}</i>}</span>
-    {hint && <small>{hint}</small>}
-  </label>
-);
-
-const Toggle = ({ checked, onChange, label, hint, disabled }) => (
-  <label className={`st-toggle ${disabled ? 'dis' : ''}`}>
-    <span className="st-tg-text"><b>{label}</b>{hint && <small>{hint}</small>}</span>
-    <input type="checkbox" checked={!!checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
-    <span className="st-sw" />
-  </label>
 );
 
 // Edits a local copy; shows Save/Discard only when something actually changed.
@@ -447,7 +432,7 @@ const Area = ({ run, settings, toast }) => {
 /* ------------------------------------------------------------------ 5. operations */
 const Ops = ({ run, settings, toast }) => {
   const src = useMemo(() => ({
-    require_photos: settings.require_photos ?? true, require_job_accept: settings.require_job_accept ?? true, auto_assign: settings.auto_assign ?? false, require_cleaner_step: settings.require_cleaner_step ?? false,
+    require_photos: settings.require_photos ?? true, require_job_accept: settings.require_job_accept ?? true, auto_assign: settings.auto_assign ?? false, require_cleaner_step: settings.require_cleaner_step ?? false, laundry_auto_assign: settings.laundry_auto_assign ?? false,
     captain_fee_per_order: String(settings.captain_fee_per_order ?? 0), offer_timeout_min: String(settings.offer_timeout_min ?? 5), sla_hours: String(settings.sla_hours ?? 48),
     ops_phone: typeof settings.ops_phone === 'string' ? settings.ops_phone : ''
   }), [settings]);
@@ -471,6 +456,7 @@ const Ops = ({ run, settings, toast }) => {
         <Toggle checked={d.auto_assign} onChange={(v) => setD({ ...d, auto_assign: v })} label="Auto-assign new orders" hint="Offers each order to the online captain with the fewest jobs, then the nearest." />
         <Toggle checked={d.require_job_accept} onChange={(v) => setD({ ...d, require_job_accept: v })} label="Captain must accept assignments" hint="Unanswered offers go back to the queue after the timeout." />
         <Toggle checked={d.require_photos} onChange={(v) => setD({ ...d, require_photos: v })} label="Photos + piece count at pickup and delivery" hint="Protects you in claims and catches count mismatches." />
+        <Toggle checked={d.laundry_auto_assign} onChange={(v) => setD({ ...d, laundry_auto_assign: v })} label="Auto-assign laundromats" hint="When clothes are picked up, send them to the least-busy active laundromat that handles every service on the order. Off: laundromats claim from an open pool, or you assign by hand." />
         <Toggle checked={d.require_cleaner_step} onChange={(v) => setD({ ...d, require_cleaner_step: v })} label="Wait for the laundry before delivery" hint="Delivery can only start once the laundry partner marks the order ready." />
         <div className="st-grid2" style={{ marginTop: '.9rem' }}>
           <Field label="Offer timeout" suffix="min" hint="How long a captain has to accept"><input type="number" min="1" value={d.offer_timeout_min} onChange={(e) => setD({ ...d, offer_timeout_min: e.target.value })} /></Field>

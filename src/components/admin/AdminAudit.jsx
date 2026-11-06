@@ -75,7 +75,7 @@ export const AdminAudit = () => {
                         <td>{isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}</td>
                         <td><small>{dt(r.created_at)}</small></td>
                         <td><b>{r.actor_email || 'system'}</b><br /><small>{r.actor_role}</small></td>
-                        <td><span className={`pill ${OP_CLS[o] || ''}`}>{o}</span> {ent.replace(/_/g, ' ')}</td>
+                        <td><span className={`pill cap ${OP_CLS[o] || ''}`}>{o}</span> {ent.replace(/_/g, ' ')}</td>
                         <td><small className="mono">{r.target || '—'}</small></td>
                       </tr>
                       {isOpen && <tr className="audit-row"><td /><td colSpan="4"><Details d={r.details} /></td></tr>}

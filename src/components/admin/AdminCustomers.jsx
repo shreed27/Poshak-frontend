@@ -106,7 +106,7 @@ const Detail = ({ c, onClose, onChanged }) => {
         {tickets.length > 0 && (<>
           <h4>Complaints</h4>
           <div className="tbl-wrap"><table className="tbl compact"><tbody>
-            {tickets.map((t) => <tr key={t.ticket_no}><td>{t.ticket_no}<br /><small>{t.category.replace(/_/g, ' ')}</small></td><td><span className="pill">{t.status.replace('_', ' ')}</span></td><td className="r"><small>{dOnly(t.created_at)}</small></td></tr>)}
+            {tickets.map((t) => <tr key={t.ticket_no}><td>{t.ticket_no}<br /><small>{t.category.replace(/_/g, ' ')}</small></td><td><span className="pill cap">{t.status.replace('_', ' ')}</span></td><td className="r"><small>{dOnly(t.created_at)}</small></td></tr>)}
           </tbody></table></div>
         </>)}
       </aside>

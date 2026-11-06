@@ -9,6 +9,9 @@ import { useCatalog } from '../../context/CatalogContext';
 import { getDeliveryQr } from '../../lib/payments';
 import { OpsGate } from './OpsGate';
 import { SosButton, EarningsTab } from './CaptainExtras';
+import { RiderStrip, RiderWarnings, RiderHistory } from './RiderExtras';
+import { PartnerProfile, StatusBanner, useMyProfile } from './PartnerProfile';
+import './ops2.css';
 import { NotificationBell } from '../NotificationBell';
 import { PhotoCapture, GarmentChecklist, checklistFrom, totalPieces } from './PhotoCapture';
 import { canStartDelivery } from '../../lib/orderStatus';
@@ -206,15 +209,19 @@ const Captain = () => {
   const [lastFix, setLastFix] = useState(null);
   const [error, setError] = useState('');
   const [me, setMe] = useState(null);
+  const [sum, setSum] = useState(null);
+  const [profile, reloadProfile] = useMyProfile();
   const [tab, setTab] = useState('jobs');
   const watchId = useRef(null);
   const lastPush = useRef(0);
 
   const load = useCallback(async () => {
-    const [{ data, error: err }, { data: pay }] = await Promise.all([
+    const [{ data, error: err }, { data: pay }, { data: sm }] = await Promise.all([
       supabase.from('orders').select(SELECT).eq('captain_id', uid).order('created_at', { ascending: false }),
-      supabase.from('payments').select('amount').eq('collected_by', uid).eq('method', 'cash').eq('deposited', false)
+      supabase.from('payments').select('amount').eq('collected_by', uid).eq('method', 'cash').eq('deposited', false),
+      supabase.rpc('captain_summary')
     ]);
+    setSum(sm || null);
     if (err) { setError(err.message); return; }
     setOrders(data.map((r) => fromRow(r)));   // captains get no OTPs: they never exist client-side
     setCash((pay || []).reduce((a, p) => a + Number(p.amount), 0));
@@ -268,11 +275,11 @@ const Captain = () => {
   return (
     <div className="ops-root ops-captain">
       <header className="ops-top">
-        <div className="ops-brand">Poshak <span>Captain</span></div>
+        <div className="ops-brand">Poshak <span>Rider</span></div>
         <div className="ops-top-right">
           <SosButton activeOrderId={orders.find((o) => o.status === 'active')?.dbId} />
           <NotificationBell userId={uid} onNew={() => { try { navigator.vibrate?.(200); } catch { /* ignore */ } }} />
-          <button className="ops-icon" onClick={() => { logout(); window.location.hash = '#/staff'; }}><LogOut size={16} /></button>
+          <button className="ops-icon" onClick={() => { logout(); window.location.hash = '#/rider'; }}><LogOut size={16} /></button>
         </div>
       </header>
 
@@ -283,6 +290,10 @@ const Captain = () => {
           <small>This is what customers see. Wrong details? Ask the admin to update them.</small>
         </div>
       )}
+
+      <StatusBanner profile={profile} />
+      <RiderWarnings profile={profile} />
+      <RiderStrip s={sum} cash={cash} />
 
       <div className={`ops-share ${sharing ? 'on' : ''}`}>
         <Radio size={18} />
@@ -298,8 +309,10 @@ const Captain = () => {
       {gpsError && <div className="ops-error">{gpsError}</div>}
       {error && <div className="ops-error">{error}</div>}
 
-      <div className="cap-tabs"><button className={tab === 'jobs' ? 'on' : ''} onClick={() => setTab('jobs')}>Jobs</button><button className={tab === 'earn' ? 'on' : ''} onClick={() => setTab('earn')}>Earnings</button></div>
+      <div className="cap-tabs">{[['jobs', `Jobs${active.length ? ` (${active.length})` : ''}`], ['earn', 'Earnings'], ['history', 'History'], ['profile', 'Profile']].map(([k, l]) => <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}</div>
       {tab === 'earn' && <EarningsTab />}
+      {tab === 'history' && <RiderHistory orders={orders} />}
+      {tab === 'profile' && <PartnerProfile role="captain" profile={profile} reload={reloadProfile} />}
       {tab === 'jobs' && <>
       <h3 className="ops-h">My jobs ({active.length})</h3>
       {active.length === 0 && <div className="ops-card ops-empty">Nothing assigned yet. New jobs appear here instantly.</div>}
@@ -358,7 +371,7 @@ const Captain = () => {
 };
 
 export const CaptainApp = () => (
-  <OpsGate title="Poshak Captain" roles={['captain', 'admin']}>
+  <OpsGate title="Poshak Rider" roles={['captain']} kind="rider">
     <Captain />
   </OpsGate>
 );

@@ -18,6 +18,7 @@ import { useCart } from './context/CartContext';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { CaptainApp } from './components/admin/CaptainApp';
 import { StaffPortal } from './components/admin/StaffPortal';
+import { SlowLoading } from './components/StuckHelp';
 import { CleanerApp } from './components/admin/CleanerApp';
 import { isBackendConfigured } from './lib/supabase';
 
@@ -44,7 +45,7 @@ export function AppContent() {
   const [bookingService, setBookingService] = useState(null);
   const { setIsTrackerOpen } = useCart();
 
-  // Ops screens live at /#/admin and /#/captain
+  // Each team role has its own app and sign-in page: /#/admin, /#/rider, /#/laundry (and /#/staff sends anyone to theirs)
   const [hash, setHash] = useState(() => window.location.hash);
   useEffect(() => {
     const onHash = () => setHash(window.location.hash);
@@ -53,7 +54,7 @@ export function AppContent() {
   }, []);
 
   // Staff only ever see their own app: wherever they are, they are pulled back to it.
-  const staffHome = { admin: '#/admin', captain: '#/captain', cleaner: '#/cleaner' }[role] || null;
+  const staffHome = { admin: '#/admin', captain: '#/rider', cleaner: '#/laundry' }[role] || null;
   useEffect(() => {
     if (isAuthenticated && roleReady && staffHome && hash !== staffHome) window.location.hash = staffHome;
   }, [isAuthenticated, roleReady, staffHome, hash]);
@@ -104,13 +105,13 @@ export function AppContent() {
 
   // Don't flash the customer app at a team member while we find out who they are.
   if (isBackendConfigured && (!authReady || (session && !roleReady))) {
-    return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', color: '#888', fontFamily: 'system-ui' }}>Loading…</div>;
+    return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', color: '#888', fontFamily: 'system-ui' }}><SlowLoading /></div>;
   }
-  if (staffHome && session) return staffHome === '#/admin' ? <AdminDashboard /> : staffHome === '#/cleaner' ? <CleanerApp /> : <CaptainApp />;
+  if (staffHome && session) return staffHome === '#/admin' ? <AdminDashboard /> : staffHome === '#/laundry' ? <CleanerApp /> : <CaptainApp />;
   if (hash.startsWith('#/staff')) return <StaffPortal />;
   if (hash.startsWith('#/admin')) return <AdminDashboard />;
-  if (hash.startsWith('#/captain')) return <CaptainApp />;
-  if (hash.startsWith('#/cleaner')) return <CleanerApp />;
+  if (hash.startsWith('#/rider') || hash.startsWith('#/captain')) return <CaptainApp />;
+  if (hash.startsWith('#/laundry') || hash.startsWith('#/cleaner')) return <CleanerApp />;
 
   if (currentView === 'login') {
     return (

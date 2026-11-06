@@ -183,3 +183,5 @@
 .cap-tabs { display: flex; gap: 0.35rem; padding: 0.6rem 1.25rem 0; }
 .cap-tabs button { flex: 1; border: 1px solid #e5e7eb; background: #fff; border-radius: 9999px; padding: 0.45rem; font-weight: 700; font-size: 0.82rem; cursor: pointer; }
 .cap-tabs button.on { background: #111; color: #fff; border-color: #111; }
+
+.og-ic { width: 46px; height: 46px; border-radius: 14px; background: #fff1ec; color: #fa5929; display: flex; align-items: center; justify-content: center; margin-bottom: .75rem; }

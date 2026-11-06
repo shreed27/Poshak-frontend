@@ -2,24 +2,26 @@ import React, { useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { isBackendConfigured } from '../../lib/supabase';
 import { Card, GoogleButton, SetupHelp } from './OpsGate';
+import { SlowLoading, AuthErrorNote } from '../StuckHelp';
 
 // /#/staff — the one link you give the team. Signs in, then sends each person to their own screen.
 export const StaffPortal = () => {
-  const { session, role, authReady, roleReady, logout } = useAuth();
+  const { session, role, authReady, roleReady, logout, authError } = useAuth();
 
   useEffect(() => {
     if (!session || !roleReady) return;
-    const home = { admin: '#/admin', captain: '#/captain', cleaner: '#/cleaner' }[role];
+    const home = { admin: '#/admin', captain: '#/rider', cleaner: '#/laundry' }[role];
     if (home) window.location.hash = home;
   }, [session, role, roleReady]);
 
   if (!isBackendConfigured) return <SetupHelp title="Poshak Team" />;
-  if (!authReady || (session && !roleReady)) return <Card>Loading…</Card>;
+  if (!authReady || (session && !roleReady)) return <Card><SlowLoading /></Card>;
 
   if (!session) {
     return (
       <Card>
         <h2>Poshak Team</h2>
+        <AuthErrorNote message={authError} />
         <p>Delivery partners and the Poshak team sign in here with Google. You will be taken to the right screen automatically.</p>
         <GoogleButton hash="#/staff" />
         <p className="ops-muted" style={{ marginTop: '0.75rem' }}>Customer? <a href="#/">Open the Poshak app</a></p>
@@ -31,7 +33,7 @@ export const StaffPortal = () => {
     return (
       <Card>
         <h2>Not on the team list</h2>
-        <p><b>{session.user.email}</b> hasn't been added as staff yet. Ask an admin to add this email under Dashboard → Team, then sign in again.</p>
+        <p><b>{session.user.email}</b> isn't on the team list, or the access has been paused. Ask an admin to add this email under Riders / Laundromats / Team (or reinstate it), then sign in again.</p>
         <div className="ops-row">
           <a className="ops-btn" href="#/">Customer app</a>
           <button className="ops-btn" onClick={logout}>Use another account</button>

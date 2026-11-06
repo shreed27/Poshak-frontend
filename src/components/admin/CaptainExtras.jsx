@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Siren, X, Phone, TrendingUp, Star, Wallet } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useCatalog } from '../../context/CatalogContext';
+import { BarChart } from './charts';
 
 const KINDS = [['sos', 'Emergency / SOS'], ['accident', 'Accident'], ['vehicle', 'Vehicle breakdown'], ['harassment', 'Harassed or threatened'], ['other', 'Other problem']];
 
@@ -63,12 +64,19 @@ export const EarningsTab = () => {
   const load = useCallback(async () => {
     const [{ data: sum }, { data: er }, { data: po }] = await Promise.all([
       supabase.rpc('captain_summary'),
-      supabase.from('captain_earnings').select('*, orders(order_code)').order('created_at', { ascending: false }).limit(20),
+      supabase.from('captain_earnings').select('*, orders(order_code)').order('created_at', { ascending: false }).limit(80),
       supabase.from('captain_payouts').select('*').order('created_at', { ascending: false }).limit(5)
     ]);
     setS(sum); setRows(er || []); setPayouts(po || []);
   }, []);
   useEffect(() => { load(); }, [load]);
+  const week = (() => {
+    const ist = new Date(Date.now() + 5.5 * 3600e3);
+    const days = [];
+    for (let i = 6; i >= 0; i--) { const d = new Date(ist.getTime() - i * 86400000).toISOString().slice(0, 10); days.push({ d, label: new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short' }), value: 0 }); }
+    rows.forEach((r) => { const d = new Date(new Date(r.created_at).getTime() + 5.5 * 3600e3).toISOString().slice(0, 10); const x = days.find((y) => y.d === d); if (x) x.value += Number(r.amount); });
+    return days;
+  })();
   if (!s) return <div className="ops-card ops-empty" style={{ margin: '1rem 1.25rem' }}>Loading…</div>;
   const pending = Number(s.pending_earnings) + Number(s.pending_tips);
   return (
@@ -84,6 +92,7 @@ export const EarningsTab = () => {
         <div className="ops-line"><Wallet size={14} /> <span>Cash in hand to deposit: <b>₹{s.cash_held}</b></span></div>
         <p className="ops-muted">Settlements net your cash in hand against your earnings.</p>
       </div>
+      <div className="rd-card" style={{ margin: '0 0 .8rem' }}><h4>Last 7 days</h4><BarChart height={150} money valueLabel="Earned" data={week} /></div>
       <h3 className="ops-h" style={{ margin: '1rem 0 0.5rem' }}>Recent deliveries</h3>
       {rows.length === 0 && <div className="ops-card ops-empty">Completed deliveries appear here.</div>}
       {rows.map((r) => <div key={r.id} className="ops-card cap-earn-row"><span>#{r.orders?.order_code} · {new Date(r.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span><b>+₹{r.amount}</b>{r.paid_out && <em>paid</em>}</div>)}

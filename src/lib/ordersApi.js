@@ -76,6 +76,7 @@ export const fromRow = (r, secret, checks = {}) => {
     customerLocation: { lat: r.pickup_lat, lng: r.pickup_lng },
     captainLocation: r.captain_lat != null ? { lat: r.captain_lat, lng: r.captain_lng } : null,
     captainId: r.captain_id,
+    cleanerId: r.cleaner_id,
     rider: r.captain_name
       ? {
           name: r.captain_name,

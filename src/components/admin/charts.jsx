@@ -13,7 +13,8 @@ const Frame = ({ data, height, format, children, pad = { l: 46, r: 14, t: 14, b:
   const W = 800;
   const max = niceMax(Math.max(0, ...data.map((d) => d.value)));
   const y = (v) => pad.t + (1 - v / max) * (height - pad.t - pad.b);
-  const ticks = [0, 0.25, 0.5, 0.75, 1].map((t) => max * t);
+  const whole = format !== 'money' && max <= 5;                       // tiny counts: 0,1,2… instead of 0,.25,.5…
+  const ticks = whole ? Array.from({ length: max + 1 }, (_, i) => i) : [0, 0.25, 0.5, 0.75, 1].map((t) => max * t);
   return (
     <svg viewBox={`0 0 ${W} ${height}`} className="ch-svg" role="img">
       {ticks.map((t) => (

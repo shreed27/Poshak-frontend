@@ -3,6 +3,20 @@ import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext();
 
+// Never wait forever on the network: a hung request must turn into an error the person can see.
+const withTimeout = (promise, ms, what) => Promise.race([
+  Promise.resolve(promise),
+  new Promise((_, reject) => setTimeout(() => reject(new Error(`${what} timed out. Check your connection and try again.`)), ms))
+]);
+
+// Google / Supabase put sign-in failures in the URL (?error_description=… or #error_description=…).
+const urlAuthError = () => {
+  try {
+    const m = window.location.href.match(/[?&#]error_description=([^&#]+)/);
+    return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : '';
+  } catch { return ''; }
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
@@ -17,11 +31,14 @@ export const AuthProvider = ({ children }) => {
   const [role, setRole] = useState('customer');
   const [authReady, setAuthReady] = useState(!supabase);
   const [roleReady, setRoleReady] = useState(!supabase);
+  const [authError, setAuthError] = useState(() => urlAuthError());
 
   // Mirror the Supabase session (Google sign-in) into the app's user object.
   useEffect(() => {
     if (!supabase) return undefined;
+    let seq = 0;                                       // ignore results from an older sign-in state
     const apply = (sess) => {
+      const mine = ++seq;
       setSession(sess);
       if (sess?.user) {
         const m = sess.user.user_metadata || {};
@@ -35,13 +52,16 @@ export const AuthProvider = ({ children }) => {
           isSupabase: true,
           joinedDate: prev?.joinedDate || new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
         }));
-        // Server decides: matches this email against the staff list and returns admin / captain / customer.
+        // Server decides: matches this email against the staff list and returns admin / captain / cleaner / customer.
         setRoleReady(false);
-        supabase.rpc('claim_staff_role').then(({ data, error }) => {
-          if (error) console.warn('Role check failed:', error.message);
-          setRole(data || 'customer');
-          setRoleReady(true);
-        });
+        withTimeout(supabase.rpc('claim_staff_role'), 12000, 'Checking your account')
+          .then(({ data, error }) => {
+            if (mine !== seq) return;
+            if (error) { console.warn('Role check failed:', error.message); setAuthError(`Could not check your account: ${error.message}`); }
+            setRole(data || 'customer');
+            setRoleReady(true);
+          })
+          .catch((e) => { if (mine !== seq) return; console.warn(e.message); setAuthError(e.message); setRole('customer'); setRoleReady(true); });
       } else {
         setRole('customer');
         setRoleReady(true);
@@ -49,8 +69,12 @@ export const AuthProvider = ({ children }) => {
       }
       setAuthReady(true);
     };
-    supabase.auth.getSession().then(({ data }) => apply(data.session));
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, sess) => apply(sess));
+    withTimeout(supabase.auth.getSession(), 10000, 'Signing in')
+      .then(({ data, error }) => { if (error) setAuthError(error.message); apply(data?.session ?? null); })
+      .catch((e) => { setAuthError(e.message); apply(null); });
+    // Do NOT call Supabase from inside this callback directly: supabase-js holds its auth lock while it runs, so a
+    // request made here waits on that same lock forever (a documented deadlock). Defer it to the next tick.
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, sess) => { setTimeout(() => apply(sess), 0); });
     return () => sub.subscription.unsubscribe();
   }, []);
 
@@ -127,6 +151,8 @@ export const AuthProvider = ({ children }) => {
         role,
         authReady,
         roleReady,
+        authError,
+        clearAuthError: () => setAuthError(''),
         loginWithGoogleIdToken,
         loginWithGoogleOAuth,
         isAuthModalOpen,

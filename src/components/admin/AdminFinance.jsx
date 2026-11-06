@@ -136,7 +136,7 @@ export const AdminFinance = () => {
             {refunds.map((x) => (
               <tr key={x.id}><td><small>{dt(x.created_at)}</small></td><td><b>#{x.orders?.order_code}</b><br /><small>{x.orders?.customer_name}</small></td>
                 <td>{x.method === 'razorpay' ? 'Razorpay' : x.method === 'wallet' ? 'Wallet' : 'Manual'}</td><td className="r"><b>{inr2(x.amount)}</b></td>
-                <td><span className={`pill ${RSTAT[x.status]}`}>{x.status}</span></td><td><small>{x.reason || '—'}</small></td></tr>
+                <td><span className={`pill cap ${RSTAT[x.status]}`}>{x.status}</span></td><td><small>{x.reason || '—'}</small></td></tr>
             ))}
           </tbody></table></div>
         ))}

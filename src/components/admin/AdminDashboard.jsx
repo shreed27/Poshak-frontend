@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, MapPin, Phone, Navigation, RefreshCw, LogOut, UserCheck, ChevronRight, XCircle, LayoutDashboard, ShoppingBag, Users, Wallet, LifeBuoy, Bike, Settings, ScrollText, UserCog, Search, Download, RotateCcw } from 'lucide-react';
+import { Bell, MapPin, Phone, Navigation, RefreshCw, LogOut, UserCheck, ChevronRight, XCircle, LayoutDashboard, ShoppingBag, Users, Wallet, LifeBuoy, Bike, Shirt, Settings, ScrollText, UserCog, Search, Download, RotateCcw } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { withSecrets, subscribeOrders } from '../../lib/ordersApi';
@@ -8,7 +8,7 @@ import { L, createMap, homeIcon, riderIcon } from '../main-app/mapKit';
 import { OpsGate } from './OpsGate';
 import { AdminSettings } from './AdminSettings';
 import { AdminTickets } from './AdminTickets';
-import { AdminCaptains } from './AdminCaptains';
+import { AdminPartners } from './AdminPartners';
 import { NotificationBell } from '../NotificationBell';
 import { InvoiceButton } from '../InvoiceButton';
 import { useSignedUrls } from '../../lib/photos';
@@ -97,7 +97,7 @@ const Team = ({ myEmail }) => {
   const [staff, setStaff] = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState('captain');
+  const [role, setRole] = useState('admin');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [vehicle, setVehicle] = useState('');
@@ -124,13 +124,13 @@ const Team = ({ myEmail }) => {
       .then(() => { setEmail(''); setName(''); setPhone(''); setVehicle(''); });
   };
   const signedIn = (em) => profiles.some((p) => p.email?.toLowerCase() === em.toLowerCase());
-  const link = `${window.location.origin}/#/staff`;
+  const link = window.location.origin;
 
   return (
     <div className="ops-team">
       <div className="ops-card">
-        <h3>Team sign-in link</h3>
-        <p className="ops-muted">Send this to everyone on the team. They sign in with their Google account and land on the right screen automatically.</p>
+        <h3>How the team signs in</h3>
+        <p className="ops-muted">Everyone uses the normal Poshak Google login. Their Gmail decides where they land: admins go to this dashboard, riders to the rider app, laundromats to the laundry app. Nothing separate to share.</p>
         <div className="ops-linkbox">
           <code>{link}</code>
           <button className="ops-btn" onClick={() => { navigator.clipboard?.writeText(link); setMsg('Link copied'); }}>Copy</button>
@@ -138,11 +138,10 @@ const Team = ({ myEmail }) => {
       </div>
 
       <div className="ops-card">
-        <h3>Add a team member</h3>
+        <h3>Add an admin</h3>
+        <p className="ops-muted">Admins get the full dashboard. Add delivery partners under <b>Riders</b> and laundry partners under <b>Laundromats</b> — they have their own detailed profiles.</p>
         <form className="ops-addform" onSubmit={add}>
           <select value={role} onChange={(e) => setRole(e.target.value)}>
-            <option value="captain">Delivery partner (captain app)</option>
-            <option value="cleaner">Laundry partner (cleaning app)</option>
             <option value="admin">Maker / admin (full dashboard)</option>
           </select>
           <input type="email" required placeholder="Their Google email" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -195,14 +194,15 @@ const OrderChecks = ({ order }) => {
 };
 
 const NAV = [
-  ['overview', 'Overview', LayoutDashboard], ['orders', 'Orders', ShoppingBag], ['customers', 'Customers', Users], ['finance', 'Finance', Wallet],
-  ['tickets', 'Complaints', LifeBuoy], ['captains', 'Captains', Bike], ['settings', 'Prices & settings', Settings], ['audit', 'Audit log', ScrollText], ['team', 'Team', UserCog]
+  ['overview', 'Overview', LayoutDashboard], ['orders', 'Orders', ShoppingBag], ['customers', 'Customers', Users], ['riders', 'Riders', Bike], ['laundromats', 'Laundromats', Shirt],
+  ['finance', 'Finance', Wallet], ['tickets', 'Complaints', LifeBuoy], ['settings', 'Prices & settings', Settings], ['audit', 'Audit log', ScrollText], ['team', 'Team & admins', UserCog]
 ];
 
 const Dashboard = () => {
   const { session, logout } = useAuth();
   const [rows, setRows] = useState([]);
   const [captains, setCaptains] = useState([]);
+  const [cleaners, setCleaners] = useState([]);
   const [cashRows, setCashRows] = useState([]);
   const [view, setView] = useState('overview');
   const [search, setSearch] = useState('');
@@ -251,6 +251,7 @@ const Dashboard = () => {
   useEffect(() => {
     load();
     supabase.from('profiles').select('id,name,email,phone,is_online,last_seen_at').eq('role', 'captain').then(({ data }) => setCaptains(data || []));
+    supabase.from('profiles').select('id,name,email').eq('role', 'cleaner').then(({ data }) => setCleaners(data || []));
     return subscribeOrders('admin', load);
   }, [load]);
 
@@ -285,6 +286,7 @@ const Dashboard = () => {
     if (err) setError(err.message); else { setError(''); load(); }
   };
   const setStatus = (o, status) => act(() => supabase.rpc('admin_set_status', { p_id: o.dbId, p_status: status }));
+  const assignLaundry = (o, id) => act(() => supabase.rpc('admin_assign_cleaner', { p_id: o.dbId, p_cleaner: id || null }));
   const assign = (o, captainId) => captainId && act(() => supabase.rpc('admin_assign_captain', { p_id: o.dbId, p_captain: captainId }));
   const refund = (o) => setRefundFor(o);
   const exportOrders = () => downloadCsv('poshak-orders', shown, [
@@ -307,7 +309,7 @@ const Dashboard = () => {
           <NotificationBell userId={session.user.id} />
           <span className="ops-user">{session.user.email}</span>
           <button className="ops-icon" onClick={load} title="Refresh"><RefreshCw size={16} /></button>
-          <button className="ops-icon" onClick={() => { logout(); window.location.hash = '#/staff'; }} title="Sign out"><LogOut size={16} /></button>
+          <button className="ops-icon" onClick={() => { logout(); window.location.hash = '#/admin'; }} title="Sign out"><LogOut size={16} /></button>
         </div>
       </header>
 
@@ -321,7 +323,7 @@ const Dashboard = () => {
       {error && <div className="ops-error">{error}</div>}
 
       {okMsg && <div className="ops-ok-bar" onClick={() => setOkMsg('')}>{okMsg}</div>}
-      {view === 'overview' ? <AdminAnalytics /> : view === 'customers' ? <AdminCustomers /> : view === 'finance' ? <AdminFinance /> : view === 'audit' ? <AdminAudit /> : view === 'team' ? <Team myEmail={session.user.email} /> : view === 'settings' ? <AdminSettings /> : view === 'tickets' ? <AdminTickets onCount={setTicketCount} /> : view === 'captains' ? <AdminCaptains /> : (<>
+      {view === 'overview' ? <AdminAnalytics /> : view === 'customers' ? <AdminCustomers /> : view === 'finance' ? <AdminFinance /> : view === 'audit' ? <AdminAudit /> : view === 'team' ? <Team myEmail={session.user.email} /> : view === 'settings' ? <AdminSettings /> : view === 'tickets' ? <AdminTickets onCount={setTicketCount} /> : view === 'riders' ? <AdminPartners role="captain" /> : view === 'laundromats' ? <AdminPartners role="cleaner" /> : (<>
       {alerts.length > 0 && (
         <div className="ops-alerts">
           {alerts.map((a) => (
@@ -432,6 +434,14 @@ const Dashboard = () => {
                     {selected.rider?.phone && <a className="ops-icon" href={`tel:${selected.rider.phone}`}><Phone size={15} /></a>}
                   </div>
 
+                  <div className="ops-assign">
+                    <Shirt size={15} />
+                    <select value={selected.cleanerId || ''} disabled={['cleaning', 'ready', 'out_for_delivery'].includes(selected.dbStatus) && !!selected.cleanerId} onChange={(e) => assignLaundry(selected, e.target.value)}>
+                      <option value="">{cleaners.length ? 'Laundromat: open pool (first to claim)' : 'No laundromats yet — add under Laundromats'}</option>
+                      {cleaners.map((c) => <option key={c.id} value={c.id}>{c.name || c.email}</option>)}
+                    </select>
+                  </div>
+
                   <div className="ops-actions">
                     {nextStatus(selected.dbStatus) && (
                       <button className="ops-btn ops-btn-primary" onClick={() => setStatus(selected, nextStatus(selected.dbStatus))}>
@@ -463,7 +473,7 @@ const Dashboard = () => {
 };
 
 export const AdminDashboard = () => (
-  <OpsGate title="Poshak Admin" roles={['admin']}>
+  <OpsGate title="Poshak Admin" roles={['admin']} kind="admin">
     <Dashboard />
   </OpsGate>
 );
