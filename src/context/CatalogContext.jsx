@@ -36,15 +36,22 @@ export const CatalogProvider = ({ children }) => {
   useEffect(() => { reload(); }, [reload]);
 
   const value = useMemo(() => {
-    const services = rates
-      ? rates.filter((x) => x.active).map((x) => {
-          const base = QUICK_SERVICES.find((q) => q.id === x.id) || GENERIC;
-          const rate = Number(x.rate);
-          return { ...base, id: x.id, name: x.name, unit: x.unit, unitPrice: rate, price: `₹${rate}/${x.unit}` };
-        })
+    // Priced services are bookable like normal. "Price on request" services (alterations, dry cleaning) are listed separately:
+    // they go through the quote flow instead of the cart. Per-quote hidden rows (kind = 'quote') never appear in the catalogue.
+    const toService = (x) => {
+      const base = QUICK_SERVICES.find((q) => q.id === x.id) || GENERIC;
+      if (x.price_on_request) return { ...base, id: x.id, name: x.name, unit: x.unit, unitPrice: 0, price: 'Price on request', onRequest: true };
+      const rate = Number(x.rate);
+      return { ...base, id: x.id, name: x.name, unit: x.unit, unitPrice: rate, price: `₹${rate}/${x.unit}`, onRequest: false };
+    };
+    const catalogue = rates
+      ? rates.filter((x) => (x.kind ?? 'standard') === 'standard' && (x.active || x.price_on_request)).map(toService)
       : QUICK_SERVICES;
+    const services = catalogue.filter((s) => !s.onRequest);
+    const quoteServices = catalogue.filter((s) => s.onRequest);
     return {
       services,
+      quoteServices,
       minCharge: Number(settings.min_charge ?? 99),
       memberPct: Number(settings.member_discount_pct ?? 0),
       slotWindows: settings.slot_windows || DEFAULT_WINDOWS,

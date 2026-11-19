@@ -1,9 +1,19 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { LegalModal } from './LegalModals';
+import { useCatalog } from '../context/CatalogContext';
+import { supportPhone } from '../lib/brand';
+import { SERVICE_AREA } from '../lib/serviceArea';
 
 export const LaundyFooter = ({ onNavClick, onOpenBooking }) => {
   const [activeLegalTab, setActiveLegalTab] = useState(null);
+  // Contact details and the service area come from Admin → Prices & settings, so the website never shows made-up ones.
+  const { support, settings } = useCatalog();
+  const area = settings?.service_area || {};
+  const areaName = area.name || SERVICE_AREA.name;
+  const radius = Number(area.radius_km || SERVICE_AREA.radiusKm);
+  const email = support?.email || 'support@poshak.in';
+  const phone = supportPhone(support);
   return (
     <footer className="laundy-footer-master-root">
       {/* Background Bubble Foam Texture */}
@@ -35,7 +45,7 @@ export const LaundyFooter = ({ onNavClick, onOpenBooking }) => {
             transition={{ type: "spring", stiffness: 200, damping: 22, delay: 0.1 }}
           >
             <p className="footer-cta-desc">
-              Experience the convenience of having your laundry expertly cleaned and delivered right to your.
+              Experience the convenience of having your laundry expertly cleaned and delivered right to your door.
             </p>
             <motion.button 
               className="footer-get-started-btn"
@@ -57,7 +67,7 @@ export const LaundyFooter = ({ onNavClick, onOpenBooking }) => {
           <div className="footer-brand-col">
             <span className="footer-brand-serif">Poshak</span>
             <p className="footer-brand-desc">
-              Bengaluru's premier garment care & laundry ecosystem. Doorstep pickup across Indiranagar, Koramangala, HSR Layout, Whitefield & more.
+              Doorstep laundry in Bengaluru, priced by the kilo. Pickup and delivery around {areaName}.
             </p>
           </div>
 
@@ -72,23 +82,21 @@ export const LaundyFooter = ({ onNavClick, onOpenBooking }) => {
             </ul>
           </div>
 
-          {/* Col 3: Utilities */}
+          {/* Col 3: Where we serve (from settings) */}
           <div className="footer-links-col">
-            <span className="footer-column-title">Service Hubs</span>
+            <span className="footer-column-title">Where we serve</span>
             <ul className="footer-links-list">
-              <li><a href="#services" onClick={(e) => { e.preventDefault(); onNavClick('services'); }}>Indiranagar & CBD</a></li>
-              <li><a href="#services" onClick={(e) => { e.preventDefault(); onNavClick('services'); }}>Koramangala & HSR</a></li>
-              <li><a href="#services" onClick={(e) => { e.preventDefault(); onNavClick('services'); }}>Whitefield & Bellandur</a></li>
-              <li><a href="#contact" onClick={(e) => { e.preventDefault(); onOpenBooking && onOpenBooking(); }}>JP Nagar & Jayanagar</a></li>
+              <li><a href="#services" onClick={(e) => { e.preventDefault(); onNavClick('services'); }}>{areaName}</a></li>
+              <li className="footer-city-tag">Within {radius} km · Bengaluru</li>
             </ul>
           </div>
 
           {/* Col 4: Contact Info */}
           <div className="footer-links-col">
-            <span className="footer-column-title">Bengaluru Desk</span>
+            <span className="footer-column-title">Contact</span>
             <ul className="footer-links-list contact-list">
-              <li><a href="mailto:care@poshak.in">care@poshak.in</a></li>
-              <li><a href="tel:+918045678900">+91 80 4567 8900</a></li>
+              <li><a href={`mailto:${email}`}>{email}</a></li>
+              {phone && <li><a href={`tel:${phone.replace(/[^+\d]/g, '')}`}>{phone}</a></li>}
               <li className="footer-city-tag">Karnataka, India</li>
             </ul>
           </div>
@@ -96,7 +104,7 @@ export const LaundyFooter = ({ onNavClick, onOpenBooking }) => {
 
         {/* Copyright Line & DPDP Statutory Links */}
         <div className="footer-copyright-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          <span>© 2026 <span className="text-orange">Poshak Technologies Pvt. Ltd.</span> All Rights Reserved</span>
+          <span>© {new Date().getFullYear()} <span className="text-orange">Poshak</span>. All rights reserved.</span>
           <div style={{ display: 'flex', gap: '1.25rem', fontSize: '0.82rem', flexWrap: 'wrap' }}>
             <button 
               type="button" 

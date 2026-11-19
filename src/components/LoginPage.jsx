@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useGoogleLogin, GoogleLogin } from '@react-oauth/google';
-import { supabase } from '../lib/supabase';
+import { supabase, getAuthProviders } from '../lib/supabase';
 import { LegalModal } from './LegalModals';
 
 export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
@@ -36,7 +36,7 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
 
   // Authenticated Member Direct Pickup State
   const [selectedService, setSelectedService] = useState(
-    bookingService ? bookingService.name : 'Wash, Dry & Fold'
+    bookingService && ['Wash & Fold', 'Wash, Fold & Iron'].includes(bookingService.name) ? bookingService.name : 'Wash & Fold'
   );
   const [flatBuilding, setFlatBuilding] = useState('Flat 304, Palm Grove Apts');
   const [streetArea, setStreetArea] = useState('12th Main Rd, HAL 2nd Stage, Indiranagar');
@@ -90,6 +90,7 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
         onLoginSuccess && onLoginSuccess();
       } catch (err) {
         console.error('Failed to fetch user profile from Google API:', err);
+        if (supabase) { setAuthError('Google sign-in did not complete. Please try again.'); return; }
         loginDemo('Google Member', 'user@gmail.com');
         onLoginSuccess && onLoginSuccess();
       } finally {
@@ -98,7 +99,8 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
     },
     onError: (error) => {
       console.warn('Google Sign-In notice:', error);
-      // Fallback to quick demo profile if popup closed or unconfigured client in local environment
+      // Real backend: never fake a login. Local demo (no backend configured): fall back to a demo profile.
+      if (supabase) { setAuthError('Google sign-in was cancelled or blocked. Please try again.'); return; }
       handleQuickDemoLogin('Aditya Hegde (Google)', 'aditya@poshak.in');
     },
   });
@@ -112,40 +114,70 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
     }, 350);
   };
 
-  const handlePhoneSubmit = (e) => {
-    e.preventDefault();
-    if (!dpdpConsent) {
-      alert('Please check the box to agree to the Terms of Service and DPDP Act 2023 Privacy Notice.');
-      return;
-    }
-    if (!otpSent) {
-      if (phone.length >= 10) {
-        setOtpSent(true);
-      }
-    } else {
-      setLoading(true);
-      setTimeout(() => {
-        loginDemo(fullName || 'Bengaluru Member', `${phone}@poshak.in`);
-        setLoading(false);
-        onLoginSuccess && onLoginSuccess();
-      }, 450);
-    }
+  // ---- real sign-in (Supabase): one-time codes by SMS or email. Falls back to the demo flow only when no backend is configured.
+  const [resendIn, setResendIn] = useState(0);
+  // Hide the phone tab until an SMS provider is switched on in Supabase (otherwise it can only show an error).
+  const [phoneEnabled, setPhoneEnabled] = useState(!supabase);
+  React.useEffect(() => { if (supabase) getAuthProviders().then((p) => setPhoneEnabled(p.phone)); }, []);
+  React.useEffect(() => { if (!phoneEnabled && authMethod === 'phone') setAuthMethod('google'); }, [phoneEnabled, authMethod]);
+  React.useEffect(() => { if (resendIn <= 0) return undefined; const t = setTimeout(() => setResendIn((n) => n - 1), 1000); return () => clearTimeout(t); }, [resendIn]);
+  const friendly = (msg = '') => (/provider|not enabled|unsupported/i.test(msg) ? 'This sign-in method isn’t switched on yet. Please use Google for now.'
+    : /rate limit|too many|seconds/i.test(msg) ? 'Too many tries. Please wait a minute and try again.'
+    : /invalid|expired|token/i.test(msg) ? 'That code is wrong or has expired. Check it and try again, or resend a new one.' : msg);
+  const needConsent = () => { if (!dpdpConsent) { alert('Please check the box to agree to the Terms of Service and DPDP Act 2023 Privacy Notice.'); return true; } return false; };
+
+  const sendPhoneCode = async () => {
+    setLoading(true); setAuthError(null);
+    try {
+      if (phone.length !== 10) throw new Error('Enter your 10-digit mobile number');
+      const { error } = await supabase.auth.signInWithOtp({ phone: `+91${phone}`, options: { data: { full_name: fullName } } });
+      if (error) throw error;
+      setOtpSent(true); setOtp(''); setResendIn(30);
+    } catch (err) { setAuthError(friendly(err.message)); } finally { setLoading(false); }
+  };
+  const sendEmailCode = async () => {
+    setLoading(true); setAuthError(null);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { data: { full_name: fullName }, shouldCreateUser: true } });
+      if (error) throw error;
+      setOtpSent(true); setOtp(''); setResendIn(45);
+    } catch (err) { setAuthError(friendly(err.message)); } finally { setLoading(false); }
   };
 
-  const handleEmailSubmit = (e) => {
+  const handlePhoneSubmit = async (e) => {
     e.preventDefault();
-    if (!dpdpConsent) {
-      alert('Please check the box to agree to the Terms of Service and DPDP Act 2023 Privacy Notice.');
+    if (needConsent()) return;
+    if (!supabase) {                                             // local demo mode
+      if (!otpSent) { if (phone.length >= 10) setOtpSent(true); return; }
+      setLoading(true);
+      setTimeout(() => { loginDemo(fullName || 'Bengaluru Member', `${phone}@poshak.in`); setLoading(false); onLoginSuccess && onLoginSuccess(); }, 450);
       return;
     }
-    if (email) {
+    if (!otpSent) { await sendPhoneCode(); return; }
+    setLoading(true); setAuthError(null);
+    try {
+      const { error } = await supabase.auth.verifyOtp({ phone: `+91${phone}`, token: otp.trim(), type: 'sms' });
+      if (error) throw error;
+      if (fullName) supabase.auth.updateUser({ data: { full_name: fullName } }).catch(() => {});
+      onLoginSuccess && onLoginSuccess();
+    } catch (err) { setAuthError(friendly(err.message)); } finally { setLoading(false); }
+  };
+
+  const handleEmailSubmit = async (e) => {
+    e.preventDefault();
+    if (needConsent() || !email) return;
+    if (!supabase) {
       setLoading(true);
-      setTimeout(() => {
-        loginDemo(fullName || email.split('@')[0], email);
-        setLoading(false);
-        onLoginSuccess && onLoginSuccess();
-      }, 450);
+      setTimeout(() => { loginDemo(fullName || email.split('@')[0], email); setLoading(false); onLoginSuccess && onLoginSuccess(); }, 450);
+      return;
     }
+    if (!otpSent) { await sendEmailCode(); return; }
+    setLoading(true); setAuthError(null);
+    try {
+      const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token: otp.trim(), type: 'email' });
+      if (error) throw error;
+      onLoginSuccess && onLoginSuccess();
+    } catch (err) { setAuthError(friendly(err.message)); } finally { setLoading(false); }
   };
 
 
@@ -205,8 +237,8 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
                   <CheckCircle2 size={16} />
                 </div>
                 <div>
-                  <strong>Pure RO Water Wash</strong>
-                  <p>Gentle on fibers, harsh on stains & zero fabric shrinkage</p>
+                  <strong>Pay by the kilo</strong>
+                  <p>Clothes are weighed at your door, so you pay only for what you send</p>
                 </div>
               </div>
 
@@ -215,8 +247,8 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
                   <Zap size={16} />
                 </div>
                 <div>
-                  <strong>Express 24-Hr Turnaround</strong>
-                  <p>Direct doorstep collection across Indiranagar, HSR, Koramangala & Whitefield</p>
+                  <strong>Doorstep pickup & delivery</strong>
+                  <p>Now serving SG Palya & Christ University, Bengaluru</p>
                 </div>
               </div>
 
@@ -232,7 +264,7 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
             </div>
 
             <div className="login-visual-footer-note">
-              <span>🌿 100% Eco-Safe Formulas • Italian Steam Precision</span>
+              <span>Doorstep laundry · Bengaluru</span>
             </div>
           </div>
         </motion.div>
@@ -273,9 +305,8 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
                         onChange={(e) => setSelectedService(e.target.value)}
                         className="member-custom-select"
                       >
-                        <option value="Wash, Dry & Fold">Wash, Dry & Fold (₹95 / kg • 24 Hours)</option>
-                        <option value="Wash & Iron">Wash & Iron (₹149 / kg • Most Popular)</option>
-                        <option value="Shoe Cleaning">Shoe Cleaning (₹199 / pair • 48 Hours)</option>
+                        <option value="Wash & Fold">Wash & Fold (₹59 / kg • 24 Hours)</option>
+                        <option value="Wash, Fold & Iron">Wash, Fold & Iron (₹89 / kg • Most Popular)</option>
                       </select>
                     </div>
 
@@ -435,6 +466,8 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
                   )}
                 </div>
 
+                {authError && <div role="alert" style={{ background: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca', borderRadius: 12, padding: '.6rem .8rem', fontSize: '.82rem', margin: '0 0 .9rem', lineHeight: 1.4 }}>{authError}</div>}
+
                 {/* Method Tabs */}
                 <div className="login-tabs-row">
                   <button 
@@ -443,15 +476,17 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
                   >
                     <span>Google</span>
                   </button>
-                  <button 
-                    className={`login-tab-btn ${authMethod === 'phone' ? 'active' : ''}`}
-                    onClick={() => setAuthMethod('phone')}
-                  >
-                    <span>Phone OTP</span>
-                  </button>
+                  {phoneEnabled && (
+                    <button 
+                      className={`login-tab-btn ${authMethod === 'phone' ? 'active' : ''}`}
+                      onClick={() => { setAuthMethod('phone'); setOtpSent(false); setAuthError(null); }}
+                    >
+                      <span>Phone OTP</span>
+                    </button>
+                  )}
                   <button 
                     className={`login-tab-btn ${authMethod === 'email' ? 'active' : ''}`}
-                    onClick={() => setAuthMethod('email')}
+                    onClick={() => { setAuthMethod('email'); setOtpSent(false); setAuthError(null); }}
                   >
                     <span>Email</span>
                   </button>
@@ -507,7 +542,7 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
                 {/* Tab 1: Google 1-Click Login */}
                 {authMethod === 'google' && (
                   <div className="login-method-body">
-                    <div className="google-official-login-container">
+                    {!supabase && <div className="google-official-login-container">
                       <GoogleLogin
                         onSuccess={(credentialResponse) => {
                           try {
@@ -530,6 +565,7 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
                             onLoginSuccess && onLoginSuccess();
                           } catch (err) {
                             console.error('Error parsing Google credential:', err);
+                            if (supabase) { setAuthError('Google sign-in did not complete. Please try again.'); return; }
                             loginDemo('Google Member', 'user@poshak.in');
                             onLoginSuccess && onLoginSuccess();
                           }
@@ -544,7 +580,7 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
                         text="continue_with"
                         width="100%"
                       />
-                    </div>
+                    </div>}
 
                     <button 
                       className="google-action-btn hover-lift"
@@ -567,14 +603,14 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
                       </svg>
                       <div className="google-btn-content">
                         <span className="google-btn-title">
-                          {loading ? 'Connecting Google API...' : 'Google OAuth Popup'}
+                          {loading ? 'Connecting…' : supabase ? 'Continue with Google' : 'Google OAuth Popup'}
                         </span>
-                        <span className="google-btn-caption">Direct Google API Authorization</span>
+                        <span className="google-btn-caption">{supabase ? 'Secure sign-in with your Google account' : 'Direct Google API Authorization'}</span>
                       </div>
                       <ArrowRight size={18} className="google-arrow" />
                     </button>
 
-                    <div className="login-fast-access-box">
+                    {!supabase && <div className="login-fast-access-box">
                       <span className="fast-access-label">Quick Test Profile:</span>
                       <div className="fast-access-chips">
                         <button 
@@ -606,7 +642,7 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
                           <span>Rohan (HSR Layout)</span>
                         </button>
                       </div>
-                    </div>
+                    </div>}
                   </div>
                 )}
 
@@ -640,7 +676,7 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
                           </div>
                         </div>
                         <button type="submit" className="login-submit-btn-orange">
-                          <span>Get 4-Digit OTP</span>
+                          <span>{loading ? 'Sending…' : 'Send OTP'}</span>
                           <ArrowRight size={16} />
                         </button>
                       </>
@@ -653,20 +689,21 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
                           </button>
                         </div>
                         <div className="form-group-item">
-                          <label>Enter 4-Digit Code</label>
+                          <label>Enter the {supabase ? '6' : '4'}-digit code</label>
                           <input 
                             type="text" 
                             value={otp}
-                            onChange={(e) => setOtp(e.target.value.slice(0, 4))}
+                            onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, supabase ? 6 : 4))}
                             placeholder="• • • •"
                             className="otp-code-input"
                             autoFocus
                             required
                           />
-                          <span className="otp-demo-hint">Testing Hint: Enter any 4 numbers (e.g. 1234)</span>
+                          {!supabase && <span className="otp-demo-hint">Testing Hint: Enter any 4 numbers (e.g. 1234)</span>}
+                          {supabase && <button type="button" className="edit-phone-btn" style={{ marginTop: '.5rem' }} disabled={resendIn > 0 || loading} onClick={sendPhoneCode}>{resendIn > 0 ? `Resend code in ${resendIn}s` : 'Resend code'}</button>}
                         </div>
                         <button type="submit" className="login-submit-btn-orange" disabled={loading}>
-                          <span>{loading ? 'Verifying...' : 'Confirm & Schedule Pickup'}</span>
+                          <span>{loading ? 'Verifying…' : 'Confirm & continue'}</span>
                           <ArrowRight size={16} />
                         </button>
                       </>
@@ -697,8 +734,15 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
                         required
                       />
                     </div>
+                    {supabase && otpSent && (
+                      <div className="form-group-item">
+                        <label>Enter the 6-digit code we emailed you</label>
+                        <input type="text" inputMode="numeric" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="• • • • • •" className="otp-code-input" autoFocus required />
+                        <button type="button" className="edit-phone-btn" style={{ marginTop: '.5rem' }} disabled={resendIn > 0 || loading} onClick={sendEmailCode}>{resendIn > 0 ? `Resend code in ${resendIn}s` : 'Resend code'}</button>
+                      </div>
+                    )}
                     <button type="submit" className="login-submit-btn-orange" disabled={loading}>
-                      <span>{loading ? 'Logging In...' : 'Continue to Schedule Pickup'}</span>
+                      <span>{loading ? 'Please wait…' : supabase ? (otpSent ? 'Verify & continue' : 'Email me a code') : 'Continue to Schedule Pickup'}</span>
                       <ArrowRight size={16} />
                     </button>
                   </form>
@@ -707,7 +751,7 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
                 {/* Security & Reassurance Footer */}
                 <div className="login-card-guarantee-row">
                   <ShieldCheck size={16} className="text-green" />
-                  <span>Encrypted with 256-Bit SSL • No spam guarantee</span>
+                  <span>Secure sign-in · We never share your details</span>
                 </div>
               </>
             )}

@@ -5,6 +5,7 @@ import { fromRow } from '../../lib/ordersApi';
 import { downloadCsv, inr, inr2, dt } from '../../lib/csv';
 import { Donut } from './charts';
 import { RefundDialog } from './RefundDialog';
+import { AdminRecon } from './AdminRecon';
 
 const RANGES = [[7, '7 days'], [30, '30 days'], [90, '90 days'], [365, '1 year']];
 const METHOD = { online: 'Online', upi_qr: 'UPI QR', cash: 'Cash' };
@@ -115,13 +116,15 @@ export const AdminFinance = () => {
       </div>
 
       <div className="chips" style={{ marginTop: '.5rem' }}>
-        {[['payments', 'Payments'], ['refunds', `Refunds${k.failed ? ` · ${k.failed} failed` : ''}`], ['cash', `Cash to collect${cashByCaptain.length ? ` · ${cashByCaptain.length}` : ''}`]].map(([id, l]) => <button key={id} className={tab === id ? 'on' : ''} onClick={() => setTab(id)}>{l}</button>)}
+        {[['payments', 'Payments'], ['refunds', `Refunds${k.failed ? ` · ${k.failed} failed` : ''}`], ['cash', `Cash to collect${cashByCaptain.length ? ` · ${cashByCaptain.length}` : ''}`], ['recon', 'Reconciliation']].map(([id, l]) => <button key={id} className={tab === id ? 'on' : ''} onClick={() => setTab(id)}>{l}</button>)}
         <span className="grow" />
         {tab === 'payments' && <><select className="sel" value={method} onChange={(e) => setMethod(e.target.value)}><option value="all">All methods</option><option value="online">Online</option><option value="upi_qr">UPI QR</option><option value="cash">Cash</option></select><button className="ops-btn" onClick={exportPays}><Download size={14} /> Export CSV</button></>}
         {tab === 'refunds' && <button className="ops-btn" onClick={exportRefunds}><Download size={14} /> Export CSV</button>}
       </div>
 
-      <section className="panel flush">
+      {tab === 'recon' && <AdminRecon />}
+
+      {tab !== 'recon' && <section className="panel flush">
         {tab === 'payments' && (shownPays.length === 0 ? <div className="ch-empty">No payments.</div> : (
           <div className="tbl-wrap tall"><table className="tbl"><thead><tr><th>When</th><th>Order</th><th>Method</th><th className="r">Amount</th><th>Reference</th></tr></thead><tbody>
             {shownPays.map((x) => (
@@ -145,7 +148,7 @@ export const AdminFinance = () => {
             {cashByCaptain.map((c) => <tr key={c.id}><td><b>{c.name}</b></td><td className="r"><b>{inr(c.amount)}</b></td><td className="r"><button className="ops-btn ops-btn-primary" onClick={() => deposit(c)}>Mark deposited</button></td></tr>)}
           </tbody></table></div>
         ))}
-      </section>
+      </section>}
 
       {refundFor && <RefundDialog order={refundFor} onClose={() => setRefundFor(null)} onDone={(m) => { setRefundFor(null); setMsg(m); load(); }} />}
     </div>

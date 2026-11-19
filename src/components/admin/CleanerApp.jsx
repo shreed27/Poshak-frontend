@@ -11,6 +11,7 @@ import { PhotoCapture } from './PhotoCapture';
 import { NotificationBell } from '../NotificationBell';
 import { BarChart, AreaChart } from './charts';
 import { PartnerProfile, StatusBanner, docWarnings, useMyProfile } from './PartnerProfile';
+import { InstallPrompt } from '../InstallPrompt';
 import './ops2.css';
 
 const beep = () => {
@@ -172,7 +173,7 @@ const Cleaner = () => {
           <NotificationBell userId={session.user.id} />
           <span className="ops-user">{profile?.business_name || session.user.email}</span>
           <button className="ops-icon" onClick={refresh} title="Refresh"><RefreshCw size={16} /></button>
-          <button className="ops-icon" onClick={() => { logout(); window.location.hash = '#/laundry'; }} title="Sign out"><LogOut size={16} /></button>
+          <button className="ops-icon" onClick={logout} title="Sign out"><LogOut size={16} /></button>
         </div>
       </header>
 
@@ -182,6 +183,7 @@ const Cleaner = () => {
         </nav>
         <main className="ops-main">
           {flash && <div className="ops-flash"><Inbox size={16} /> {flash}</div>}
+          <InstallPrompt />
           <StatusBanner profile={profile} />
           {warns.length > 0 && <div className="pp-warn"><b><ShieldAlert size={15} /> Documents need attention</b>{warns.map((w) => <span key={w}>{w}</span>)}</div>}
           {error && <div className="ops-error">{error}</div>}

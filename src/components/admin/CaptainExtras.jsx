@@ -3,6 +3,7 @@ import { Siren, X, Phone, TrendingUp, Star, Wallet } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useCatalog } from '../../context/CatalogContext';
 import { BarChart } from './charts';
+import { supportPhone } from '../../lib/brand';
 
 const KINDS = [['sos', 'Emergency / SOS'], ['accident', 'Accident'], ['vehicle', 'Vehicle breakdown'], ['harassment', 'Harassed or threatened'], ['other', 'Other problem']];
 
@@ -14,7 +15,7 @@ export const SosButton = ({ activeOrderId }) => {
   const [msg, setMsg] = useState('');
   const [state, setState] = useState('form');          // form | sending | sent | error
   const [error, setError] = useState('');
-  const phone = typeof settings.ops_phone === 'string' ? settings.ops_phone : '';
+  const phone = (typeof settings.ops_phone === 'string' && settings.ops_phone.trim()) || supportPhone(settings.support);
 
   const send = async () => {
     setState('sending'); setError('');

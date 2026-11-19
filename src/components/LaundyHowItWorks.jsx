@@ -51,7 +51,7 @@ export const LaundyHowItWorks = () => {
               <div className="how-number">01</div>
               <h3 className="how-card-title">Book your slot</h3>
               <p className="how-card-desc">
-                Choose a 1-hour doorstep pickup slot across Indiranagar, HSR, Koramangala & Whitefield.
+                Pick a doorstep pickup slot that suits you. We currently serve SG Palya & Christ University.
               </p>
             </motion.div>
 
@@ -127,9 +127,9 @@ export const LaundyHowItWorks = () => {
               whileHover={{ y: -8, scale: 1.02, boxShadow: "0 20px 40px rgba(0,0,0,0.08)" }}
             >
               <div className="how-number">03</div>
-              <h3 className="how-card-title">RO wash & steam press</h3>
+              <h3 className="how-card-title">Wash & press</h3>
               <p className="how-card-desc">
-                Weighed fairly in kg, washed in softened RO water, and Italian vacuum steam pressed.
+                Weighed in kg at your door, then washed, dried and pressed with care.
               </p>
             </motion.div>
 

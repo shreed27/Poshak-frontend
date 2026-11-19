@@ -1,297 +1,128 @@
 import React from 'react';
-import { 
-  Sparkles, 
-  Clock, 
-  MapPin, 
-  ArrowRight, 
-  ShieldCheck, 
-  Camera, 
-  Truck, 
-  CheckCircle2,
-  Calendar,
-  Check,
-  Plus
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Clock, Minus, Plus, Check, ChevronRight } from 'lucide-react';
+import { useT } from '../../i18n';
 import { useCatalog } from '../../context/CatalogContext';
+import { useSlots } from '../../hooks/useSlots';
 import { getProgress, statusCopy } from '../../lib/orderEngine';
+import { BRAND, telHref, supportPhone } from '../../lib/brand';
 
-export const SwiggyHomeView = ({ 
-  activeOrder,
-  onNavigateToOrders,
-  selectedServiceIds = ['wash-iron'],
-  onToggleService,
-  onBookDirect,
-  onOpenBookingFlow,
-  hasCartItems = false,
-  now = Date.now()
-}) => {
+export const DEFAULT_KG = 4;
+export const MAX_KG = 30;
 
-  const { services } = useCatalog();
-  const selectedServicesList = services.filter(s => selectedServiceIds.includes(s.id));
+// − 4 kg + : the customer's rough weight for one service. Going below 1 kg removes it.
+export const KgStepper = ({ kg, onChange }) => (
+  <div className="qc-step" role="group" aria-label="Estimated weight">
+    <button type="button" onClick={() => onChange(kg - 1)} aria-label="Less"><Minus size={14} strokeWidth={3} /></button>
+    <span>{kg} kg</span>
+    <button type="button" onClick={() => onChange(Math.min(MAX_KG, kg + 1))} disabled={kg >= MAX_KG} aria-label="More"><Plus size={14} strokeWidth={3} /></button>
+  </div>
+);
+
+export const SwiggyHomeView = ({ activeOrder, onNavigateToOrders, basket = {}, onSetKg, onRequestQuote, now = Date.now() }) => {
+  const { t } = useT();
+  const { services, quoteServices, minCharge, support } = useCatalog();
+  const days = useSlots();
+  const next = days.flatMap((d) => d.slots).find((s) => !s.full);
+  const live = activeOrder ? statusCopy(activeOrder, getProgress(activeOrder, now)) : null;
 
   return (
-    <div className="swiggy-feed-container">
-      {/* 1. Live Active Order Strip (If user has an active ongoing order) */}
-      {activeOrder && (
-        <motion.div 
-          className="swiggy-live-order-strip"
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          onClick={onNavigateToOrders}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span className="strip-status-dot"></span>
-            <div>
-              <div style={{ fontWeight: '800', fontSize: '0.9rem' }}>
-                Order #{activeOrder.orderId} • {statusCopy(activeOrder, getProgress(activeOrder, now)).title}
-              </div>
-              <div style={{ fontSize: '0.76rem', color: 'rgba(255,255,255,0.75)' }}>
-                {statusCopy(activeOrder, getProgress(activeOrder, now)).sub} • Captain {activeOrder.rider?.name}
-              </div>
-            </div>
-          </div>
+    <div className="qc-page">
+      {/* Next pickup: what quick-commerce apps lead with ("delivery in 10 min") */}
+      <section className="qc-eta">
+        <div className="qc-eta-ic"><Clock size={20} strokeWidth={2.4} /></div>
+        <div>
+          <div className="qc-eta-k">Next pickup</div>
+          <div className="qc-eta-v">{next ? `${next.day}, ${next.label}` : 'All slots are full'}</div>
+        </div>
+      </section>
+      <div className="qc-perks">
+        <span className="qc-perk"><Check size={13} strokeWidth={3} /> Free pickup & delivery</span>
+        <span className="qc-perk"><Check size={13} strokeWidth={3} /> Weighed at your door</span>
+        <span className="qc-perk"><Check size={13} strokeWidth={3} /> Pay after delivery</span>
+      </div>
 
-          <button className="strip-track-btn">
-            <span>Track Live</span>
-            <ArrowRight size={13} />
-          </button>
-        </motion.div>
+      {activeOrder && (
+        <button type="button" className="qc-live" onClick={onNavigateToOrders}>
+          <span className="qc-live-dot" />
+          <div style={{ minWidth: 0 }}>
+            <b>#{activeOrder.orderId} · {live.title}</b>
+            <span>{live.sub}</span>
+          </div>
+          <em>{t('track.live')} ›</em>
+        </button>
       )}
 
-      {/* 2. Promo Banners Carousel */}
-      <div className="swiggy-promo-carousel">
-        <div 
-          className="swiggy-banner-card banner-orange"
-          onClick={() => onBookDirect('wash-iron')}
-          style={{ cursor: 'pointer' }}
-        >
+      <section className="qc-sec">
+        <div className="qc-sec-head">
           <div>
-            <div className="banner-pill">
-              <Sparkles size={11} />
-              <span>FLAT 20% OFF WITH POSHAK GOLD</span>
-            </div>
-            <h3 className="banner-title">Doorstep Laundry & Steam Iron</h3>
-            <p className="banner-sub">
-              Upload clothes photos, get digital doorstep weigh-in, and zero advance payment.
-            </p>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.75rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.04em' }}>
-              USE CODE: POSHAKGOLD
-            </span>
-            <span style={{ fontSize: '0.8rem', fontWeight: '800', textDecoration: 'underline' }}>
-              Book Now →
-            </span>
+            <h2 className="qc-h">Laundry by the kilo</h2>
+            <p className="qc-sub">Add a rough weight. We weigh it at your door and bill the exact amount{minCharge ? ` (minimum ₹${minCharge})` : ''}.</p>
           </div>
         </div>
-
-        <div 
-          className="swiggy-banner-card banner-blue"
-          onClick={() => onBookDirect('express-6h')}
-          style={{ cursor: 'pointer' }}
-        >
-          <div>
-            <div className="banner-pill">
-              <Clock size={11} />
-              <span>EXPRESS DELIVERY</span>
-            </div>
-            <h3 className="banner-title">6-Hour Blitz Turnaround</h3>
-            <p className="banner-sub">
-              Picked up in 20 minutes, sanitized soft RO wash & delivered crisp before dinner.
-            </p>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.75rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.04em' }}>
-              AT YOUR NEAREST HUB
-            </span>
-            <span style={{ fontSize: '0.8rem', fontWeight: '800', textDecoration: 'underline' }}>
-              Book Blitz →
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Our Services Catalogue (Direct Selection & 1-Click Booking) */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <div>
-          <h2 className="swiggy-section-heading" style={{ margin: 0 }}>
-            Our Laundry & Care Services
-          </h2>
-          <p style={{ fontSize: '0.84rem', color: '#686b78', margin: '0.2rem 0 0' }}>
-            Select any service to book instant doorstep pickup
-          </p>
-        </div>
-
-        <button 
-          onClick={onOpenBookingFlow}
-          style={{
-            background: '#fa5929',
-            color: '#ffffff',
-            border: 'none',
-            padding: '0.55rem 1.25rem',
-            borderRadius: '9999px',
-            fontSize: '0.84rem',
-            fontWeight: '800',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.4rem',
-            boxShadow: '0 4px 14px rgba(250, 89, 41, 0.25)'
-          }}
-        >
-          <span>Schedule Pickup ({selectedServiceIds.length})</span>
-          <ArrowRight size={14} />
-        </button>
-      </div>
-
-      <div className="dashboard-services-grid">
-        {services.map((svc) => {
-          const isSelected = selectedServiceIds.includes(svc.id);
-          return (
-            <div 
-              key={svc.id} 
-              className={`dashboard-service-card ${isSelected ? 'is-selected' : ''}`}
-              onClick={() => onToggleService(svc.id)}
-            >
-              <div className="dashboard-service-img-wrap">
-                <img src={svc.image} alt={svc.name} className="dashboard-service-img" />
-                <div className="dashboard-service-price-chip">
-                  {svc.price}
+        <ul className="qc-list">
+          {services.map((svc) => {
+            const kg = basket[svc.id] || 0;
+            return (
+              <li key={svc.id} className="qc-item">
+                <img className="qc-thumb" src={svc.image} alt="" loading="lazy" />
+                <div style={{ minWidth: 0 }}>
+                  <div className="qc-item-name">{svc.name}</div>
+                  <div className="qc-item-meta">{svc.turnaround} · priced per {svc.unit}</div>
+                  <div className="qc-item-desc">{svc.desc}</div>
+                  <div className="qc-item-price">₹{svc.unitPrice}<small>/{svc.unit}</small></div>
                 </div>
-
-                {isSelected && (
-                  <div className="service-selected-pill-badge">
-                    <Check size={12} strokeWidth={3} />
-                    <span>Selected</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="dashboard-service-body">
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
-                  <span className="dashboard-veg-pill">
-                    <span className="veg-dot"></span>
-                    <span>Pure RO Soft Water</span>
-                  </span>
-                  <span style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: '700' }}>
-                    {svc.turnaround}
-                  </span>
+                <div className="qc-item-cta">
+                  {kg > 0
+                    ? <KgStepper kg={kg} onChange={(v) => onSetKg(svc.id, v)} />
+                    : <button type="button" className="qc-add" onClick={() => onSetKg(svc.id, DEFAULT_KG)}>ADD</button>}
+                  <span className="qc-est">{kg > 0 ? `≈ ₹${Math.round(kg * svc.unitPrice)}` : ' '}</span>
                 </div>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
 
-                <h3 className="dashboard-service-title">{svc.name}</h3>
-                <p className="dashboard-service-desc">{svc.desc}</p>
-
-                {/* Direct Action Buttons: 1-Click Book or Toggle */}
-                <div className="service-card-action-bar">
-                  <button 
-                    type="button"
-                    className={`service-select-toggle-btn ${isSelected ? 'active' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onToggleService(svc.id);
-                    }}
-                    title={isSelected ? 'Remove from booking' : 'Add to booking'}
-                  >
-                    {isSelected ? (
-                      <>
-                        <Check size={13} strokeWidth={3} />
-                        <span>Selected</span>
-                      </>
-                    ) : (
-                      <>
-                        <Plus size={13} />
-                        <span>Select</span>
-                      </>
-                    )}
-                  </button>
-
-                  <button 
-                    type="button"
-                    className="service-book-direct-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onBookDirect(svc.id);
-                    }}
-                    title="Book this service immediately"
-                  >
-                    <span>Book Now</span>
-                    <ArrowRight size={13} />
-                  </button>
+      {quoteServices.length > 0 && (
+        <section className="qc-sec">
+          <div className="qc-sec-head">
+            <div>
+              <h2 className="qc-h">Dry cleaning & alterations</h2>
+              <p className="qc-sub">Priced per item. Tell us what you need and we send you a price before pickup.</p>
+            </div>
+          </div>
+          <ul className="qc-list">
+            {quoteServices.map((svc) => (
+              <li key={svc.id} className="qc-item">
+                <img className="qc-thumb" src={svc.image} alt="" loading="lazy" />
+                <div style={{ minWidth: 0 }}>
+                  <div className="qc-item-name">{svc.name}</div>
+                  <div className="qc-item-meta">{svc.turnaround}</div>
+                  <div className="qc-item-desc">{svc.desc}</div>
+                  <div className="qc-item-price">Price on request</div>
                 </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+                <div className="qc-item-cta">
+                  <button type="button" className="qc-add quote" onClick={onRequestQuote}>Get quote</button>
+                  <span className="qc-est">Free to ask</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
-      {/* Floating Selected Services Bar (When 1+ services selected and cart is empty) */}
-      <AnimatePresence>
-        {selectedServicesList.length > 0 && !hasCartItems && (
-          <motion.div 
-
-            className="services-selected-float-bar"
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 50, opacity: 0 }}
-            onClick={onOpenBookingFlow}
-          >
-            <div className="selected-float-info">
-              <div className="selected-float-badge">
-                {selectedServicesList.length} {selectedServicesList.length === 1 ? 'Service' : 'Services'} Ready to Book
-              </div>
-              <div className="selected-float-title">
-                {selectedServicesList.map(s => s.name).join(' • ')}
-              </div>
-            </div>
-
-            <button className="selected-float-cta-btn">
-              <span>Book Doorstep Pickup</span>
-              <ArrowRight size={15} />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-
-      {/* 4. How Poshak Works (Simple 3 steps) */}
-      <div className="how-it-works-strip">
-        <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: '#0a0a0a', marginBottom: '1.25rem' }}>
-          How Doorstep Laundry Ordering Works
-        </h3>
-
-        <div className="how-steps-row">
-          <div className="how-step-card">
-            <div className="how-step-icon-bubble">1</div>
-            <h4 style={{ fontSize: '0.95rem', fontWeight: '800', margin: '0.5rem 0 0.2rem' }}>
-              Choose Service & Snap Photos
-            </h4>
-            <p style={{ fontSize: '0.78rem', color: '#686b78', margin: 0, lineHeight: 1.4 }}>
-              Select care packages and upload quick pictures of your clothes or laundry bag.
-            </p>
-          </div>
-
-          <div className="how-step-card">
-            <div className="how-step-icon-bubble">2</div>
-            <h4 style={{ fontSize: '0.95rem', fontWeight: '800', margin: '0.5rem 0 0.2rem' }}>
-              Doorstep Scale Weigh-in
-            </h4>
-            <p style={{ fontSize: '0.78rem', color: '#686b78', margin: 0, lineHeight: 1.4 }}>
-              Captain arrives with a certified digital scale, tags your tamper bag & zero advance needed.
-            </p>
-          </div>
-
-          <div className="how-step-card">
-            <div className="how-step-icon-bubble">3</div>
-            <h4 style={{ fontSize: '0.95rem', fontWeight: '800', margin: '0.5rem 0 0.2rem' }}>
-              Delivered Crisp on Hangers
-            </h4>
-            <p style={{ fontSize: '0.78rem', color: '#686b78', margin: 0, lineHeight: 1.4 }}>
-              Boiler steam pressed, folded or hung, delivered fresh right back to your door.
-            </p>
-          </div>
+      <section className="qc-sec">
+        <h2 className="qc-h" style={{ marginBottom: 10 }}>How it works</h2>
+        <div className="qc-steps">
+          <div className="qc-stepc"><b><i>1</i> Book a slot</b><p>Add services, pick a pickup window and place the order. No advance payment.</p></div>
+          <div className="qc-stepc"><b><i>2</i> We weigh at your door</b><p>Our rider weighs the bag in front of you and confirms it with a pickup code.</p></div>
+          <div className="qc-stepc"><b><i>3</i> Delivered back</b><p>Cleaned and returned to your door. Pay by UPI or cash on delivery.</p></div>
         </div>
-      </div>
+        <div className="qc-help">
+          <span>Questions about an order?</span>
+          <a href={telHref(supportPhone(support))}>Call {supportPhone(support) || BRAND.phone}</a>
+        </div>
+      </section>
     </div>
   );
 };

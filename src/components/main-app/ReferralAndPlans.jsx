@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Gift, Copy, Share2, Sparkles } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { buyPlan } from '../../lib/payments';
+import { buyPlan, usePaymentsLive } from '../../lib/payments';
 
 // Shown inside the wallet card: invite friends (both get a bonus) and buy a prepaid pack.
 export const ReferralAndPlans = ({ onWalletChanged }) => {
@@ -10,6 +10,7 @@ export const ReferralAndPlans = ({ onWalletChanged }) => {
   const [code, setCode] = useState('');
   const [msg, setMsg] = useState('');
   const [error, setError] = useState('');
+  const paymentsLive = usePaymentsLive();     // packs are paid online: hide them until payments are switched on
   const [busy, setBusy] = useState('');
 
   const load = useCallback(async () => {
@@ -41,7 +42,7 @@ export const ReferralAndPlans = ({ onWalletChanged }) => {
 
   return (
     <div className="psk-refplans">
-      {plans.length > 0 && (
+      {paymentsLive && plans.length > 0 && (
         <>
           <h4><Sparkles size={15} /> Prepaid packs — pay once, get extra credit</h4>
           <div className="psk-plans">

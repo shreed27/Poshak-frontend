@@ -73,7 +73,7 @@ export const OpsGate = ({ title, roles, children, kind }) => {
         <div className="ops-row">
           {HOME[role] ? <a className="ops-btn ops-btn-primary" href={HOME[role]}>Go to my screen</a> : null}
           {role === 'customer' && <a className="ops-btn" href="#/">Customer app</a>}
-          <button className="ops-btn" onClick={() => { logout(); window.location.hash = '#/staff'; }}>Sign out</button>
+          <button className="ops-btn" onClick={logout}>Sign out</button>
         </div>
       </Card>
     );

@@ -2,12 +2,13 @@
 // for exactly what is due. The customer scans it with any UPI app; the webhook marks the order paid.
 //
 // Razorpay needs to enable BOTH "UPI QR" and "single use" on your account (support request).
-import { handle, json, requireUser, serviceClient, rzp, dueOf, HttpError } from '../_shared/razorpay.ts';
+import { handle, json, requireUser, serviceClient, rzp, dueOf, HttpError, rateLimit } from '../_shared/razorpay.ts';
 
 const QR_MINUTES = 15;   // Razorpay allows close_by between 2 minutes and 2 hours from now
 
 Deno.serve(handle(async (req) => {
   const { db, user } = await requireUser(req);
+  rateLimit(`qr:${user.id}`, 20);
   const { order_id } = await req.json();
 
   const { data: o } = await db.from('orders').select('*').eq('id', order_id).eq('captain_id', user.id).maybeSingle();

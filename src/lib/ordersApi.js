@@ -76,6 +76,10 @@ export const fromRow = (r, secret, checks = {}) => {
     customerLocation: { lat: r.pickup_lat, lng: r.pickup_lng },
     captainLocation: r.captain_lat != null ? { lat: r.captain_lat, lng: r.captain_lng } : null,
     captainId: r.captain_id,
+    captainHeading: r.captain_heading,
+    captainUpdatedAt: r.captain_updated_at,
+    eta: r.eta_minutes != null ? { minutes: r.eta_minutes, km: Number(r.eta_km), leg: r.eta_leg, updatedAt: r.eta_updated_at } : null,
+    pickupWindow: r.pickup_window,
     cleanerId: r.cleaner_id,
     rider: r.captain_name
       ? {

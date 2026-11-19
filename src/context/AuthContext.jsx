@@ -21,7 +21,11 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
       const saved = localStorage.getItem('poshak_user');
-      return saved ? JSON.parse(saved) : null;
+      const parsed = saved ? JSON.parse(saved) : null;
+      // With the real backend connected, only a user backed by a Supabase session counts. Local "demo" users from earlier
+      // tests are discarded here (they would otherwise run the app in simulated demo mode).
+      if (parsed && supabase && !parsed.isSupabase) { localStorage.removeItem('poshak_user'); return null; }
+      return parsed;
     } catch {
       return null;
     }
@@ -65,7 +69,7 @@ export const AuthProvider = ({ children }) => {
       } else {
         setRole('customer');
         setRoleReady(true);
-        setUser((prev) => (prev?.isSupabase ? null : prev));
+        setUser(null);                                   // real backend: no session means signed out, never a local stand-in
       }
       setAuthReady(true);
     };
@@ -91,7 +95,8 @@ export const AuthProvider = ({ children }) => {
     if (!supabase) return false;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + hash }
+      // Always show Google's account chooser (like other apps), instead of silently reusing the last Gmail.
+      options: { redirectTo: window.location.origin + hash, queryParams: { prompt: 'select_account' } }
     });
     if (error) console.warn('Supabase OAuth failed:', error.message);
     return !error;
@@ -106,6 +111,7 @@ export const AuthProvider = ({ children }) => {
   }, [user]);
 
   const loginWithGooglePayload = (profileData) => {
+    if (supabase) return false;                        // real backend: only a Supabase session can sign anyone in
     setUser({
       name: profileData.name || 'Poshak Member',
       email: profileData.email || 'user@gmail.com',
@@ -117,6 +123,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const loginDemo = (customName = 'Shreed Shrivastava', customEmail = 'shreed@poshak.in') => {
+    if (supabase) return false;                        // demo logins exist only when no backend is configured
     setUser({
       name: customName,
       email: customEmail,
@@ -133,6 +140,13 @@ export const AuthProvider = ({ children }) => {
     try { sessionStorage.removeItem('poshak_staff_redirected'); } catch { /* ignore */ }
     setUser(null);
     setRole('customer');
+    setSession(null);
+    // Everyone (customer, admin, rider, laundry) lands back on the public website after signing out.
+    try { sessionStorage.setItem('poshak_view', 'landing'); } catch { /* ignore */ }
+    if (window.location.hash) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    }
     supabase?.auth.signOut();
   };
 
@@ -143,7 +157,7 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider
       value={{
         user,
-        isAuthenticated: !!user,
+        isAuthenticated: supabase ? !!session && !!user : !!user,
         loginWithGooglePayload,
         loginDemo,
         logout,

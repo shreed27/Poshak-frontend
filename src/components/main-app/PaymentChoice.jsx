@@ -1,15 +1,19 @@
 import React from 'react';
 import { Banknote, CreditCard } from 'lucide-react';
+import { usePaymentsLive } from '../../lib/payments';
 
 // How the customer wants to pay. COD = cash or UPI QR shown by the captain at delivery.
-export const PaymentChoice = ({ value, onChange, onlineEnabled }) => (
+export const PaymentChoice = ({ value, onChange, onlineEnabled: configured }) => {
+  const live = usePaymentsLive();
+  const onlineEnabled = configured && live;
+  return (
   <div className="psk-paychoice">
     <div className="psk-paychoice-title">How would you like to pay?</div>
     <button type="button" className={`psk-pay-opt ${value === 'cod' ? 'on' : ''}`} onClick={() => onChange('cod')}>
       <Banknote size={18} />
       <div>
         <strong>Pay on delivery</strong>
-        <span>Cash, or scan the UPI QR your captain shows. Final bill is set after weighing.</span>
+        <span>Cash, or scan the UPI QR your rider shows. Final bill is set after weighing.</span>
       </div>
     </button>
     <button
@@ -25,4 +29,6 @@ export const PaymentChoice = ({ value, onChange, onlineEnabled }) => (
       </div>
     </button>
   </div>
-);
+
+  );
+};

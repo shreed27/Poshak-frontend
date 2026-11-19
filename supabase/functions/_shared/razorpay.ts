@@ -59,13 +59,43 @@ export const safeEqual = (a: string, b: string) => {
   return diff === 0;
 };
 
+// CORS: set ALLOWED_ORIGINS (comma separated, e.g. "https://poshak.com,https://www.poshak.com") so only your site's browsers can call these functions.
+// Unset = allow any origin (fine for local development only).
+const originHeaders = (req: Request): { headers: Record<string, string>; allowed: boolean } => {
+  const list = (Deno.env.get('ALLOWED_ORIGINS') ?? '').split(',').map((x) => x.trim()).filter(Boolean);
+  const origin = req.headers.get('Origin') ?? '';
+  const { ['Access-Control-Allow-Origin']: _drop, ...rest } = cors;
+  if (list.length === 0) return { headers: { ...cors }, allowed: true };
+  const allowed = !origin || list.includes(origin);
+  return { headers: { ...rest, ...(origin && allowed ? { 'Access-Control-Allow-Origin': origin } : {}), Vary: 'Origin' }, allowed };
+};
+const withCors = (res: Response, headers: Record<string, string>) => {
+  const out = new Response(res.body, { status: res.status, statusText: res.statusText, headers: res.headers });
+  for (const [k, v] of Object.entries(headers)) out.headers.set(k, v);
+  if (!headers['Access-Control-Allow-Origin']) out.headers.delete('Access-Control-Allow-Origin');
+  return out;
+};
+
+// Best-effort per-user rate limit (in memory, per function instance). Stops accidental loops and casual abuse.
+const hits = new Map<string, number[]>();
+export const rateLimit = (key: string, max: number, windowMs = 60_000) => {
+  const now = Date.now();
+  const recent = (hits.get(key) ?? []).filter((t) => now - t < windowMs);
+  if (recent.length >= max) throw new HttpError(429, 'Too many requests. Please wait a minute and try again.');
+  recent.push(now);
+  hits.set(key, recent);
+  if (hits.size > 5000) hits.clear();
+};
+
 export const handle = (fn: (req: Request) => Promise<Response>) => async (req: Request) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+  const { headers, allowed } = originHeaders(req);
+  if (req.method === 'OPTIONS') return new Response('ok', { headers });
+  if (!allowed) return withCors(json({ error: 'Origin not allowed' }, 403), headers);
   try {
-    return await fn(req);
+    return withCors(await fn(req), headers);
   } catch (e) {
-    if (e instanceof HttpError) return json({ error: e.message }, e.status);
+    if (e instanceof HttpError) return withCors(json({ error: e.message }, e.status), headers);
     console.error(e);
-    return json({ error: 'Something went wrong' }, 500);
+    return withCors(json({ error: 'Something went wrong' }, 500), headers);
   }
 };

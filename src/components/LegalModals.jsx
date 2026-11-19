@@ -131,7 +131,7 @@ export const LegalModal = ({ isOpen, onClose, initialTab = 'dpdp' }) => {
                 <ShieldCheck size={20} color="#059669" style={{ flexShrink: 0, marginTop: '2px' }} />
                 <div style={{ fontSize: '0.8rem', color: '#065f46' }}>
                   <strong>Digital Personal Data Protection (DPDP) Act, 2023 Statutory Notice:</strong><br />
-                  Under Section 5 of the DPDP Act, 2023, Poshak Technologies Pvt. Ltd. (Data Fiduciary) provides this itemised notice informing you of the specific personal data collected, lawful purposes of processing, and mechanisms to exercise your rights.
+                  Under Section 5 of the DPDP Act, 2023, Poshak (Data Fiduciary) provides this itemised notice informing you of the specific personal data collected, lawful purposes of processing, and mechanisms to exercise your rights.
                 </div>
               </div>
 
@@ -139,8 +139,8 @@ export const LegalModal = ({ isOpen, onClose, initialTab = 'dpdp' }) => {
                 1. Data Fiduciary Identity
               </h4>
               <p>
-                <strong>Poshak Technologies Private Limited</strong> ("Poshak", "we", "us", or "our")<br />
-                Registered Address: 100 Feet Road, HAL 2nd Stage, Indiranagar, Bengaluru, Karnataka, India - 560038.<br />
+                <strong>Poshak</strong> ("Poshak", "we", "us", or "our")<br />
+                Bengaluru, Karnataka, India · Phone: <code>+91 91610 91144</code><br />
                 Corporate Contact: <code>privacy@poshak.in</code> | Grievance Contact: <code>grievance@poshak.in</code>
               </p>
 
@@ -203,7 +203,7 @@ export const LegalModal = ({ isOpen, onClose, initialTab = 'dpdp' }) => {
                 4. Turnaround Times & Delivery
               </h4>
               <p>
-                Standard wash and steam iron turnaround is 24 hours. Express Blitz delivery delivers within 6 hours. In the event of unforeseen monsoon traffic or city disruptions in Bengaluru, customer care proactively reschedules your delivery window.
+                Wash & Fold and Wash, Fold & Iron are ready in about 24 hours. Alteration and dry-cleaning timelines are given in your quote. In the event of unforeseen monsoon traffic or city disruptions in Bengaluru, customer care proactively reschedules your delivery window.
               </p>
 
               <h4 style={{ fontSize: '1rem', fontWeight: '800', color: '#111', marginTop: '1.25rem' }}>
@@ -282,7 +282,7 @@ export const LegalModal = ({ isOpen, onClose, initialTab = 'dpdp' }) => {
                   Designated Grievance Redressal Officer (DPDP Act, 2023)
                 </h4>
                 <p style={{ fontSize: '0.82rem', color: '#7c2d12', margin: '0 0 1rem' }}>
-                  Pursuant to Section 8(9) and Section 13 of the Digital Personal Data Protection Act, 2023, Poshak Technologies Pvt. Ltd. has appointed a designated Grievance Officer:
+                  Pursuant to Section 8(9) and Section 13 of the Digital Personal Data Protection Act, 2023, Poshak has appointed a designated Grievance Officer:
                 </p>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.82rem' }}>
@@ -292,7 +292,7 @@ export const LegalModal = ({ isOpen, onClose, initialTab = 'dpdp' }) => {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                     <MapPin size={15} color="#ea580c" />
-                    <span><strong>Physical Address:</strong> Grievance Cell, Poshak Technologies Pvt. Ltd., 100 Feet Road, Indiranagar, Bengaluru, KA - 560038</span>
+                    <span><strong>Phone:</strong> +91 91610 91144 · Bengaluru, Karnataka</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                     <Clock size={15} color="#ea580c" />

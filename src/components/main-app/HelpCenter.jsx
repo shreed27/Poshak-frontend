@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useCatalog } from '../../context/CatalogContext';
 import { PhotoCapture } from '../admin/PhotoCapture';
+import { supportPhone } from '../../lib/brand';
 
 export const CATEGORIES = [
   ['missing_item', 'A garment is missing'], ['damaged', 'A garment is damaged'], ['quality', 'Cleaning / ironing quality'],
@@ -102,7 +103,7 @@ export const HelpCenter = ({ orders, startOrderId, onClose }) => {
                   <div className="psk-policy">
                     <b><ShieldCheck size={14} /> Our promise</b>
                     <p>{settings.claims_policy || 'We acknowledge every complaint within 48 hours and resolve it within 30 days.'}</p>
-                    <p>Grievance officer: {support.grievance_officer || 'Poshak Support'}{support.grievance_email ? ` · ${support.grievance_email}` : ''}{support.phone ? ` · ${support.phone}` : ''}</p>
+                    <p>Grievance officer: {support.grievance_officer || 'Poshak Support'}{support.grievance_email ? ` · ${support.grievance_email}` : ''}{` · ${supportPhone(support)}`}</p>
                   </div>
                 </>
               )}

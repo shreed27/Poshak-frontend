@@ -71,7 +71,7 @@ const Services = ({ run, settings, toast }) => {
   const gst = Number(biz.gst_rate ?? 18);
   const inclusive = biz.prices_include_gst !== false;
 
-  const load = useCallback(async () => { const { data } = await supabase.from('service_rates').select('*').order('sort').order('id'); setRates(data || []); }, []);
+  const load = useCallback(async () => { const { data } = await supabase.from('service_rates').select('*').order('sort').order('id'); setRates((data || []).filter((r) => (r.kind ?? 'standard') === 'standard')); }, []);
   useEffect(() => { load(); }, [load]);
 
   const val = (r, f) => edits[r.id]?.[f] ?? (f === 'rate' ? String(r.rate) : r[f] ?? '');
@@ -122,12 +122,12 @@ const Services = ({ run, settings, toast }) => {
   }, [rates, qty, settings, gst, inclusive]);
 
   if (!rates) return <div className="sk" style={{ height: 260 }} />;
-  const live = rates.filter((r) => r.active).length;
+  const live = rates.filter((r) => r.active || r.price_on_request).length;
 
   return (
     <div className="st-stack">
       <div className="st-col">
-        <Card title="Services & prices" hint={`${live} live · ${rates.length - live} hidden. Price changes apply to new orders immediately; existing orders keep their price.`}
+        <Card title="Services & prices" hint={`${live} live · ${rates.length - live} hidden. Price changes apply to new orders immediately; existing orders keep their price. “Price on request” services have no fixed price — customers send you a request and you reply from the Quotes screen.`}
           actions={<><button className="ops-btn" onClick={() => setAdding(!adding)}><Plus size={14} /> Add service</button>{dirtyIds.length > 0 && <button className="ops-btn ops-btn-primary" disabled={busy} onClick={saveAll}><Save size={14} /> Save {dirtyIds.length} {dirtyIds.length === 1 ? 'change' : 'changes'}</button>}</>}>
           {adding && (
             <form className="st-add" onSubmit={create}>
@@ -148,13 +148,13 @@ const Services = ({ run, settings, toast }) => {
                   const dirty = dirtyIds.includes(r.id);
                   const active = edits[r.id]?.active ?? r.active;
                   return (
-                    <tr key={r.id} className={`${dirty ? 'dirty' : ''} ${active ? '' : 'off'}`}>
+                    <tr key={r.id} className={`${dirty ? 'dirty' : ''} ${active || r.price_on_request ? '' : 'off'}`}>
                       <td><input className="ops-inline" value={val(r, 'name')} onChange={(e) => setEdit(r, 'name', e.target.value)} /><small className="mono">{r.id}</small></td>
                       <td><select className="ops-inline" style={{ width: 78 }} value={val(r, 'unit')} onChange={(e) => setEdit(r, 'unit', e.target.value)}><option value="kg">kg</option><option value="pc">pc</option><option value="pair">pair</option></select></td>
                       <td><input className="ops-inline" style={{ width: 82 }} value={val(r, 'sac')} onChange={(e) => setEdit(r, 'sac', e.target.value)} /></td>
-                      <td className="r"><span className="st-price">₹<input type="number" min="1" value={val(r, 'rate')} onChange={(e) => setEdit(r, 'rate', e.target.value)} /></span></td>
-                      <td className="r"><small>{inclusive ? inr(rate - rate / (1 + gst / 100)) : inr(rate * (1 + gst / 100))}</small></td>
-                      <td><label className="st-mini"><input type="checkbox" checked={active} onChange={(e) => setEdit(r, 'active', e.target.checked)} /><span className="st-sw" /></label></td>
+                      <td className="r">{r.price_on_request ? <span className="pill warn">On request</span> : <span className="st-price">₹<input type="number" min="1" value={val(r, 'rate')} onChange={(e) => setEdit(r, 'rate', e.target.value)} /></span>}</td>
+                      <td className="r"><small>{r.price_on_request ? '—' : inclusive ? inr(rate - rate / (1 + gst / 100)) : inr(rate * (1 + gst / 100))}</small></td>
+                      <td>{r.price_on_request ? <small className="ops-muted">Quote flow</small> : <label className="st-mini"><input type="checkbox" checked={active} onChange={(e) => setEdit(r, 'active', e.target.checked)} /><span className="st-sw" /></label>}</td>
                       <td className="r">{dirty && <button className="ops-btn ops-btn-primary" disabled={busy} onClick={async () => { setBusy(true); if (await saveRow(r, { active })) toast(`${r.name} saved`); setBusy(false); load(); }}>Save</button>}</td>
                     </tr>
                   );
@@ -434,11 +434,12 @@ const Ops = ({ run, settings, toast }) => {
   const src = useMemo(() => ({
     require_photos: settings.require_photos ?? true, require_job_accept: settings.require_job_accept ?? true, auto_assign: settings.auto_assign ?? false, require_cleaner_step: settings.require_cleaner_step ?? false, laundry_auto_assign: settings.laundry_auto_assign ?? false,
     captain_fee_per_order: String(settings.captain_fee_per_order ?? 0), offer_timeout_min: String(settings.offer_timeout_min ?? 5), sla_hours: String(settings.sla_hours ?? 48),
+    eta_traffic_factor: String(settings.eta_traffic_factor ?? 1.3), eta_buffer_min: String(settings.eta_buffer_min ?? 2),
     ops_phone: typeof settings.ops_phone === 'string' ? settings.ops_phone : ''
   }), [settings]);
   const [d, setD, dirty, reset] = useDraft(src);
   const [busy, setBusy] = useState(false);
-  const NUMS = { captain_fee_per_order: 'Captain fee', offer_timeout_min: 'Offer timeout', sla_hours: 'SLA hours' };
+  const NUMS = { captain_fee_per_order: 'Captain fee', offer_timeout_min: 'Offer timeout', sla_hours: 'SLA hours', eta_traffic_factor: 'Traffic factor', eta_buffer_min: 'ETA buffer' };
   const save = async () => {
     for (const [k, l] of Object.entries(NUMS)) if (!(num(d[k]) >= 0)) return toast(`${l} must be a number`, true);
     setBusy(true);
@@ -462,6 +463,13 @@ const Ops = ({ run, settings, toast }) => {
           <Field label="Offer timeout" suffix="min" hint="How long a captain has to accept"><input type="number" min="1" value={d.offer_timeout_min} onChange={(e) => setD({ ...d, offer_timeout_min: e.target.value })} /></Field>
           <Field label="Promised turnaround (SLA)" suffix="hours" hint="Orders later than this count as late in Overview"><input type="number" min="1" value={d.sla_hours} onChange={(e) => setD({ ...d, sla_hours: e.target.value })} /></Field>
         </div>
+      </Card>
+      <Card title="Live tracking & ETA" hint="Customers see “arriving in X min” from the rider’s road route. Routing servers assume free-flowing traffic, so ETAs are stretched by these two numbers. Watch a few real trips and adjust.">
+        <div className="st-grid2">
+          <Field label="Traffic factor" suffix="×" hint="1.0 = trust the route time. 1.3 is a fair start for Bengaluru"><input type="number" min="1" max="3" step="0.1" value={d.eta_traffic_factor} onChange={(e) => setD({ ...d, eta_traffic_factor: e.target.value })} /></Field>
+          <Field label="Extra buffer" suffix="min" hint="Parking, lifts, finding the door"><input type="number" min="0" max="15" value={d.eta_buffer_min} onChange={(e) => setD({ ...d, eta_buffer_min: e.target.value })} /></Field>
+        </div>
+        <SaveBar dirty={dirty} busy={busy} onSave={save} onDiscard={reset} />
       </Card>
       <Card title="Captain pay & contact">
         <div className="st-grid2">

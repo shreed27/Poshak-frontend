@@ -7,6 +7,8 @@ import { L, createMap, pickerIcon } from '../main-app/mapKit';
 import { STATUS_LABEL } from '../../lib/orderStatus';
 import { BarChart } from './charts';
 import { Field, Toggle } from './ui';
+import { PartnerDocs } from './PartnerDocs';
+import migrationSql from '../../../supabase/migrations/0011_partners.sql?raw';
 
 const siteLink = () => window.location.origin;
 const inviteText = (rider, p) => `Hi ${p.staff.name || ''}, you have been added to Poshak as ${rider ? 'a delivery rider' : 'a laundry partner'}.
@@ -15,6 +17,29 @@ Open ${siteLink()}, tap Login and choose "Continue with Google" using ${p.staff.
 const RIDER_ACTIVE = ['captain_assigned', 'picked_up', 'cleaning', 'ready', 'out_for_delivery'];
 const LAUNDRY_ACTIVE = ['picked_up', 'cleaning', 'ready'];
 const DAY = 86400000;
+
+/* ------------------------------------------------------------------ shown when the database update (migration 0011) hasn't been applied */
+const isMissingSchema = (e) => e && (['PGRST205', 'PGRST202', '42703', '42P01', '42883'].includes(e.code) || /schema cache|does not exist/i.test(e.message || ''));
+
+const SetupCard = ({ onRecheck, checking }) => {
+  const [copied, setCopied] = useState(false);
+  const ref = (import.meta.env.VITE_SUPABASE_URL || '').match(/https:\/\/([a-z0-9]+)\.supabase\.co/)?.[1];
+  const copy = async () => { try { await navigator.clipboard.writeText(migrationSql); setCopied(true); setTimeout(() => setCopied(false), 4000); } catch { window.prompt('Copy this SQL', migrationSql.slice(0, 200)); } };
+  return (
+    <div className="an">
+      <section className="panel pt-setup">
+        <h3>One-time database update needed</h3>
+        <p className="ops-muted">Rider and laundromat management needs a few new tables and functions in your Supabase database. It takes about a minute, and nothing existing is changed or deleted.</p>
+        <ol>
+          <li><button className="ops-btn ops-btn-primary" onClick={copy}><Copy size={14} /> {copied ? 'Copied ✓' : 'Copy the SQL'}</button></li>
+          <li>Open the Supabase SQL editor{ref ? <> — <a href={`https://supabase.com/dashboard/project/${ref}/sql/new`} target="_blank" rel="noreferrer">open it here</a></> : null} and paste.</li>
+          <li>Click <b>Run</b>. It should say “Success. No rows returned”.</li>
+          <li><button className="ops-btn" onClick={onRecheck} disabled={checking}>{checking ? 'Checking…' : 'I’ve run it — check again'}</button></li>
+        </ol>
+      </section>
+    </div>
+  );
+};
 
 /* ------------------------------------------------------------------ small map picker */
 const MapPick = ({ lat, lng, onChange }) => {
@@ -253,7 +278,7 @@ const Panel = ({ p, role, orders, rates, onClose, reload, toast }) => {
         </div>
 
         <div className="seg pt-tabs">
-          {[['overview', 'Overview'], ['jobs', `Jobs (${mine.length})`], ['money', 'Money'], ['details', 'Details']].map(([k, l]) => <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}
+          {[['overview', 'Overview'], ['jobs', `Jobs (${mine.length})`], ['money', 'Money'], ['docs', 'Documents'], ['details', 'Details']].map(([k, l]) => <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}
         </div>
 
         {tab === 'overview' && (<>
@@ -345,6 +370,8 @@ const Panel = ({ p, role, orders, rates, onClose, reload, toast }) => {
           )}
         </>)}
 
+        {tab === 'docs' && <PartnerDocs email={p.staff.email} role={role} admin />}
+
         {tab === 'details' && <PartnerForm role={role} form={form} setForm={setForm} isNew={false} rates={rates} busy={busy} onSave={save} onCancel={() => { setForm(toForm(p.staff, p.prof)); setTab('overview'); }} />}
       </aside>
     </div>
@@ -364,6 +391,8 @@ export const AdminPartners = ({ role }) => {
   const [busy, setBusy] = useState(false);
   const [toastData, setToastData] = useState(null);
   const [tab, setTab] = useState('partners');
+  const [problem, setProblem] = useState(null);
+  const [checking, setChecking] = useState(false);
   const [incidents, setIncidents] = useState([]);
   const [payouts, setPayouts] = useState([]);
   const timer = useRef();
@@ -379,8 +408,9 @@ export const AdminPartners = ({ role }) => {
       supabase.from('service_rates').select('id, name').order('sort').order('id'),
       supabase.from(rider ? 'captain_earnings' : 'cleaner_earnings').select(rider ? 'captain_id, amount, created_at' : 'cleaner_id, amount, kg, created_at').gte('created_at', since)
     ]);
-    const err = se.error || od.error;
-    if (err) { toast(err.message, true); return; }
+    const err = se.error || sp.error || od.error || er.error || rt.error;
+    if (err) { setProblem(isMissingSchema(err) ? { kind: 'setup' } : { kind: 'error', message: err.message }); return; }
+    setProblem(null);
     const emails = (se.data || []).map((s) => s.email);
     const { data: prs } = emails.length ? await supabase.from('profiles').select('id, email, is_online, last_seen_at').in('email', emails) : { data: [] };
     const orders = od.data || [];
@@ -473,6 +503,8 @@ export const AdminPartners = ({ role }) => {
   const selected = sel ? data?.partners.find((p) => p.key === sel) : null;
   const noun = rider ? 'rider' : 'laundromat';
 
+  if (problem?.kind === 'setup') return <SetupCard checking={checking} onRecheck={async () => { setChecking(true); await load(); setChecking(false); }} />;
+  if (problem?.kind === 'error') return <div className="an"><div className="ops-error" style={{ margin: 0 }}>Could not load this page: {problem.message}</div><button className="ops-btn" style={{ marginTop: '.8rem' }} onClick={load}>Try again</button></div>;
   if (!data) return <div className="sk-grid">{Array.from({ length: 6 }).map((_, i) => <div key={i} className="sk" />)}</div>;
 
   return (

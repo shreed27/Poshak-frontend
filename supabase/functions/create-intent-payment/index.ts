@@ -1,9 +1,10 @@
 // Plan purchase ("add money pack") or a tip for a captain: creates the Razorpay Order and remembers what it is for.
 // The webhook / verify-payment then calls apply_intent_payment() which credits the wallet or records the tip.
-import { handle, json, requireUser, serviceClient, rzp, HttpError } from '../_shared/razorpay.ts';
+import { handle, json, requireUser, serviceClient, rzp, HttpError, rateLimit } from '../_shared/razorpay.ts';
 
 Deno.serve(handle(async (req) => {
   const { db, user } = await requireUser(req);
+  rateLimit(`intent:${user.id}`, 12);
   const body = await req.json();
   let amountPaise = 0;
   let ref = '';

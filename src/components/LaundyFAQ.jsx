@@ -1,30 +1,38 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, X } from 'lucide-react';
+import { useCatalog } from '../context/CatalogContext';
+import { SERVICE_AREA } from '../lib/serviceArea';
 
 export const LaundyFAQ = () => {
   const [openIdx, setOpenIdx] = useState(0);
+  const { services } = useCatalog();
+  const prices = Object.fromEntries(services.map((s) => [s.id, s.price]));
 
   const faqs = [
     {
       q: 'How do I schedule a Poshak pickup?',
-      a: 'Scheduling your laundry pickup is easy and hassle-free. Simply visit our website or app, choose a convenient date and time that fits your busy daily schedule, and provide your pickup address.'
+      a: 'Open the app, add your pickup address, choose Wash & Fold or Wash, Fold & Iron, pick a time slot and confirm. A captain is assigned and you can follow them live on the map, with an arrival time.'
+    },
+    {
+      q: 'What does it cost?',
+      a: `Wash & Fold is ${prices['wash-fold'] || '₹59/kg'} and Wash, Fold & Iron is ${prices['wash-iron'] || '₹89/kg'}. Your clothes are weighed at your door, so you pay for exactly what they weigh. Alteration & Dry Cleaning has no fixed price — you describe the job and we send you a quote.`
+    },
+    {
+      q: 'How does Alteration & Dry Cleaning work?',
+      a: 'Tap “Request a quote”, tell us what you need and add a photo if you like. We reply with a fixed price, usually within a few hours. Nothing is booked until you accept, and then a captain collects the items like any other order.'
     },
     {
       q: 'What areas do you serve?',
-      a: 'We serve all major metropolitan neighborhoods including Downtown, Uptown, Brooklyn, Queens, and surrounding suburban partner districts with 100% guaranteed doorstep pickup.'
+      a: `We currently pick up and deliver in ${SERVICE_AREA.name}. We’ll check your pin on the map when you add your address, and we’re expanding soon.`
     },
     {
-      q: 'How long does the process take?',
-      a: 'Our standard wash care service has a 24-hour turnaround. We also provide 6-Hour Express Blitz care for last-minute business travel or emergency needs.'
+      q: 'How long does it take?',
+      a: 'Wash & Fold and Wash, Fold & Iron are ready in about 24 hours. Alteration and dry cleaning timelines are given in your quote.'
     },
     {
-      q: 'Do you use eco-friendly cleaning?',
-      a: 'Yes! We use 100% plant-based, non-toxic, hypoallergenic eco-solvents and water-saving commercial equipment that protects your clothes and the planet.'
-    },
-    {
-      q: 'How do I pay for my laundry service?',
-      a: 'Payment is seamless via credit card, Apple Pay, Google Pay, or through our monthly recurring laundry subscription plans with instant digital receipts.'
+      q: 'How do I pay?',
+      a: 'Pay on delivery by cash or UPI, or pay online (UPI, cards, netbanking) from your order. You can also use your Poshak wallet balance.'
     }
   ];
 

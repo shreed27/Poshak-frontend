@@ -11,10 +11,11 @@ const short = (n) => (n >= 1e7 ? `${(n / 1e7).toFixed(1)}Cr` : n >= 1e5 ? `${(n 
 
 const Frame = ({ data, height, format, children, pad = { l: 46, r: 14, t: 14, b: 28 }, color }) => {
   const W = 800;
-  const max = niceMax(Math.max(0, ...data.map((d) => d.value)));
+  const raw = Math.max(0, ...data.map((d) => d.value));
+  const max = niceMax(raw);
   const y = (v) => pad.t + (1 - v / max) * (height - pad.t - pad.b);
-  const whole = format !== 'money' && max <= 5;                       // tiny counts: 0,1,2… instead of 0,.25,.5…
-  const ticks = whole ? Array.from({ length: max + 1 }, (_, i) => i) : [0, 0.25, 0.5, 0.75, 1].map((t) => max * t);
+  // No data yet: a single 0 baseline. Tiny values: whole-number ticks (0,1,2...) instead of repeated rounded labels.
+  const ticks = raw === 0 ? [0] : max <= 5 ? Array.from({ length: max + 1 }, (_, i) => i) : [0, 0.25, 0.5, 0.75, 1].map((t) => max * t);
   return (
     <svg viewBox={`0 0 ${W} ${height}`} className="ch-svg" role="img">
       {ticks.map((t) => (

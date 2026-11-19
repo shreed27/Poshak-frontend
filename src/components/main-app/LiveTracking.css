@@ -1,0 +1,34 @@
+/* Swiggy-style live ETA card + map overlays */
+.lv-card { background: #fff; border: 1.5px solid #ffe0d4; border-radius: 18px; padding: .95rem 1rem .85rem; margin: .8rem 0; box-shadow: 0 8px 24px rgba(250, 89, 41, .08); }
+.lv-card.near { border-color: #bbf7d0; background: linear-gradient(135deg, #f0fdf4, #fff); box-shadow: 0 8px 24px rgba(22, 163, 74, .12); }
+.lv-card.stale { border-color: #fde68a; }
+.lv-card.wait { display: flex; gap: .8rem; align-items: center; border-style: dashed; background: #fffaf7; box-shadow: none; }
+.lv-icon { width: 46px; height: 46px; border-radius: 14px; background: #fff1ec; color: #fa5929; display: flex; align-items: center; justify-content: center; flex-shrink: 0; animation: lvPulse 1.6s ease-in-out infinite; }
+@keyframes lvPulse { 50% { transform: scale(1.08); opacity: .8; } }
+.lv-main { display: flex; align-items: center; gap: .85rem; }
+.lv-eta { width: 62px; height: 62px; border-radius: 16px; background: #fa5929; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; line-height: 1; }
+.lv-eta b { font-size: 1.6rem; font-weight: 900; letter-spacing: -.03em; }
+.lv-eta span { font-size: .66rem; font-weight: 700; opacity: .9; margin-top: 2px; text-transform: uppercase; letter-spacing: .06em; }
+.lv-eta.near { background: #16a34a; }
+.lv-text { flex: 1; min-width: 0; }
+.lv-text h4 { margin: 0 0 .15rem; font-size: .98rem; font-weight: 800; color: #111; }
+.lv-text p { margin: 0; font-size: .8rem; color: #6b7280; line-height: 1.4; }
+.lv-chip { display: inline-flex; align-items: center; gap: .3rem; font-size: .68rem; font-weight: 800; padding: .22rem .55rem; border-radius: 9999px; white-space: nowrap; align-self: flex-start; }
+.lv-chip.live { background: #dcfce7; color: #15803d; } .lv-chip.live i { width: 7px; height: 7px; border-radius: 50%; background: #16a34a; animation: lvBlink 1.2s infinite; }
+@keyframes lvBlink { 50% { opacity: .25; } }
+.lv-chip.delayed { background: #fef3c7; color: #92400e; } .lv-chip.stale { background: #fee2e2; color: #b91c1c; } .lv-chip.none { background: #f1f5f9; color: #64748b; }
+.lv-bar { position: relative; height: 6px; background: #f1f3f5; border-radius: 9999px; margin: .95rem .2rem .4rem; }
+.lv-bar i { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #fa5929, #f59e0b); border-radius: 9999px; transition: width .8s ease; }
+.lv-card.near .lv-bar i { background: #16a34a; }
+.lv-bike { position: absolute; top: -13px; transform: translateX(-50%); font-size: 1.05rem; transition: left .8s ease; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .25)); }
+.lv-warn { display: flex; gap: .4rem; align-items: flex-start; font-size: .74rem; color: #92400e; background: #fffbeb; border-radius: 10px; padding: .45rem .6rem; margin: .5rem 0 0; line-height: 1.4; }
+.lv-rider { display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin-top: .65rem; padding-top: .6rem; border-top: 1px dashed #f1e1d9; font-size: .78rem; color: #6b7280; }
+.lv-call { display: inline-flex; align-items: center; gap: .35rem; background: #111; color: #fff; padding: .4rem .8rem; border-radius: 9999px; font-size: .76rem; font-weight: 700; text-decoration: none; }
+/* map overlays */
+.lv-mapwrap { position: relative; }
+.lv-mapwrap .lv-overlay-tl { position: absolute; top: 10px; left: 10px; z-index: 600; }
+.lv-recenter { position: absolute; bottom: 12px; left: 10px; z-index: 600; background: #fff; border: 1px solid #e5e7eb; border-radius: 9999px; padding: .4rem .8rem; font-size: .74rem; font-weight: 700; display: inline-flex; gap: .35rem; align-items: center; cursor: pointer; box-shadow: 0 4px 14px rgba(0, 0, 0, .15); }
+.psk-share { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; margin: -.2rem 0 .8rem; }
+.psk-share-btn { display: inline-flex; align-items: center; gap: .4rem; background: #fff; border: 1.5px solid #e5e7eb; border-radius: 9999px; padding: .45rem .95rem; font-size: .78rem; font-weight: 700; cursor: pointer; color: #111; }
+.psk-share-stop { background: none; border: 0; color: #9ca3af; font-size: .74rem; font-weight: 600; cursor: pointer; display: inline-flex; gap: .3rem; align-items: center; }
+.psk-share-err { color: #b91c1c; font-size: .74rem; }

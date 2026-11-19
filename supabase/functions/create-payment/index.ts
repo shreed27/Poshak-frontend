@@ -1,8 +1,9 @@
 // Customer taps "Pay online": creates a Razorpay Order for what is still due and returns what Checkout needs.
-import { handle, json, requireUser, serviceClient, rzp, dueOf, HttpError } from '../_shared/razorpay.ts';
+import { handle, json, requireUser, serviceClient, rzp, dueOf, HttpError, rateLimit } from '../_shared/razorpay.ts';
 
 Deno.serve(handle(async (req) => {
   const { db, user } = await requireUser(req);
+  rateLimit(`pay:${user.id}`, 12);
   const { order_id } = await req.json();
 
   const { data: o } = await db.from('orders').select('*').eq('id', order_id).eq('customer_id', user.id).maybeSingle();

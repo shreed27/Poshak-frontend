@@ -1,148 +1,33 @@
 import React from 'react';
+import { ChevronDown, ShoppingBag, MapPin } from 'lucide-react';
 import { NotificationBell } from '../NotificationBell';
-import { 
-  MapPin, 
-  ChevronDown, 
-  Search, 
-  ShoppingBag, 
-  Package, 
-  User, 
-  Sparkles, 
-  Check, 
-  Plus, 
-  X,
-  ExternalLink
-} from 'lucide-react';
+import { LangSwitch } from '../../i18n';
 
-export const SwiggyHeader = ({ 
-  user, 
-  activeTab, 
-  setActiveTab, 
-  addresses, 
-  activeAddress, 
-  onSelectAddress, 
-  cartCount, 
-  onOpenCart,
-  searchQuery,
-  setSearchQuery,
-  onBackToLanding,
-  activeOrderCount,
-  onOpenLocation
-}) => {
-
+// Top bar: logo, pickup address (tap to change), language, alerts. On desktop also the tabs and cart.
+export const SwiggyHeader = ({ user, activeTab, setActiveTab, activeAddress, cartCount, onOpenCart, activeOrderCount, onOpenLocation }) => {
+  const empty = Boolean(activeAddress?.placeholder);
+  const sub = empty ? 'Add your pickup address' : [activeAddress.flatBuilding, activeAddress.streetArea].filter(Boolean).join(', ');
   return (
-    <header className="swiggy-header">
-      <div className="swiggy-header-inner">
-        {/* Left: Brand Logo & Swiggy Location Chip */}
-        <div className="swiggy-header-left">
-          <div 
-            className="swiggy-logo" 
-            onClick={() => setActiveTab('laundry')}
-            title="Poshak Laundry"
-          >
-            <span>Poshak</span>
-            <span className="swiggy-logo-dot"></span>
-          </div>
-
-          <button 
-            className="swiggy-address-btn"
-            onClick={onOpenLocation}
-            aria-label="Select delivery location"
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <span className="address-label-bold">{activeAddress.label}</span>
-              <span className="address-sub-text">{activeAddress.streetArea}</span>
-              <ChevronDown size={14} color="#fa5929" />
-            </div>
-          </button>
-        </div>
-
-        {/* Center: Search Bar */}
-        <div className="swiggy-header-search">
-          <Search size={16} className="swiggy-search-icon" />
-          <input 
-            type="text" 
-            className="swiggy-search-input"
-            placeholder="Search for 'wash & fold', 'steam iron', 'dry clean'..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
-            <button 
-              onClick={() => setSearchQuery('')}
-              style={{
-                position: 'absolute',
-                right: '12px',
-                background: 'transparent',
-                border: 'none',
-                color: '#888',
-                cursor: 'pointer'
-              }}
-            >
-              <X size={14} />
+    <header className="qc-header">
+      <div className="qc-header-in">
+        <button type="button" className="qc-logo" onClick={() => setActiveTab('laundry')} aria-label="Poshak home">Poshak<i /></button>
+        <button type="button" className={`qc-addr ${empty ? 'empty' : ''}`} onClick={onOpenLocation} aria-label="Change pickup address">
+          <span className="qc-addr-top">{empty ? <MapPin size={15} /> : null}{empty ? 'Set location' : activeAddress.label}<ChevronDown size={15} strokeWidth={2.6} /></span>
+          <span className="qc-addr-sub">{sub}</span>
+        </button>
+        <div className="qc-head-right">
+          <nav className="qc-nav" aria-label="Main">
+            <button type="button" className={activeTab === 'laundry' ? 'on' : ''} onClick={() => setActiveTab('laundry')}>Laundry</button>
+            <button type="button" className={activeTab === 'orders' ? 'on' : ''} onClick={() => setActiveTab('orders')}>
+              Orders{activeOrderCount > 0 && <span className="qc-count">{activeOrderCount}</span>}
             </button>
-          )}
-        </div>
-
-        {/* Right: Clean Swiggy Navigation Links */}
-        <div className="swiggy-header-right">
+            <button type="button" className={activeTab === 'account' ? 'on' : ''} onClick={() => setActiveTab('account')}>{(user?.name || 'Account').split(' ')[0]}</button>
+            <button type="button" onClick={onOpenCart}><ShoppingBag size={16} /> Cart{cartCount > 0 && <span className="qc-count">{cartCount}</span>}</button>
+          </nav>
+          <LangSwitch compact />
           <NotificationBell userId={user?.isSupabase ? user.id : null} />
-          <button 
-            className={`swiggy-nav-pill-btn ${activeTab === 'laundry' ? 'active' : ''}`}
-            onClick={() => setActiveTab('laundry')}
-          >
-            <span>Laundry</span>
-          </button>
-
-          <button 
-            className={`swiggy-nav-pill-btn ${activeTab === 'orders' ? 'active' : ''}`}
-            onClick={() => setActiveTab('orders')}
-          >
-            <span>Orders</span>
-            {activeOrderCount > 0 && (
-              <span className="swiggy-cart-badge">{activeOrderCount}</span>
-            )}
-          </button>
-
-          <button 
-            className={`swiggy-nav-pill-btn ${activeTab === 'account' ? 'active' : ''}`}
-            onClick={() => setActiveTab('account')}
-          >
-            <User size={16} />
-            <span>{(user?.name || 'Account').split(' ')[0]}</span>
-          </button>
-
-          {/* Cart Pill */}
-          <button 
-            className="swiggy-nav-pill-btn swiggy-header-cart-btn"
-            onClick={onOpenCart}
-            aria-label="View Cart"
-            style={{
-              background: cartCount > 0 ? '#fa5929' : 'transparent',
-              color: cartCount > 0 ? '#ffffff' : '#3d4152',
-              padding: '0.45rem 0.85rem'
-            }}
-          >
-            <ShoppingBag size={17} />
-            <span className="cart-btn-text">Cart</span>
-            {cartCount > 0 && (
-              <span style={{
-                background: '#ffffff',
-                color: '#fa5929',
-                fontSize: '0.72rem',
-                fontWeight: '900',
-                padding: '0.1rem 0.45rem',
-                borderRadius: '9999px',
-                marginLeft: '0.2rem'
-              }}>
-                {cartCount}
-              </span>
-            )}
-          </button>
         </div>
-
       </div>
-
     </header>
   );
 };

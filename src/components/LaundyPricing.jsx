@@ -1,64 +1,71 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Check, Sparkles, Shirt, Sparkle, Flame, Footprints } from 'lucide-react';
+import { Check, Sparkles } from 'lucide-react';
+import { useCatalog } from '../context/CatalogContext';
 
 export const LaundyPricing = ({ onOpenBooking }) => {
+  const { services, quoteServices } = useCatalog();
+  const rate = (id, fallbackNum) => {
+    const x = services.find((v) => v.id === id);
+    return { price: `₹${x ? x.unitPrice : fallbackNum}`, unit: `/ ${x?.unit || 'kg'}` };
+  };
   const pricingPlans = [
     {
       id: 'wash-fold',
-      name: 'Wash, Dry & Fold',
+      name: 'Wash & Fold',
       badge: 'Everyday Essential',
       badgeClass: 'badge-light-orange',
-      price: '₹95',
-      unit: '/ kg',
+      ...rate('wash-fold', 59),
       turnaround: '24 Hours',
-      description: 'Daily laundry weighed in kg, sanitized with RO water, tumble dried & neatly folded.',
+      description: 'Daily laundry weighed at your door, washed in soft water, dried and neatly folded.',
       cardTheme: 'pricing-card-light',
       isPopular: false,
+      cta: 'Schedule Pickup',
       features: [
-        'Accurate digital weighing by kg',
-        'Washed in softened RO water',
-        'Gentle botanical detergents',
-        'Separated darks & whites',
-        'Neatly folded & sealed delivery'
+        'Weighed and counted at your door',
+        'Whites and colours washed separately',
+        'Gentle detergents, soft water',
+        'Neatly folded and packed',
+        'Free doorstep pickup & delivery'
       ]
     },
     {
       id: 'wash-iron',
-      name: 'Wash & Iron',
+      name: 'Wash, Fold & Iron',
       badge: 'Most Popular',
       badgeClass: 'badge-orange-solid',
-      price: '₹149',
-      unit: '/ kg',
-      turnaround: '24-36 Hours',
-      description: 'Deep RO wash + crisp Italian vacuum steam pressing for office & daily wear.',
+      ...rate('wash-iron', 89),
+      turnaround: '24 Hours',
+      description: 'Everything in Wash & Fold, plus a crisp steam press on every piece — ready to wear.',
       cardTheme: 'pricing-card-highlight',
       isPopular: true,
+      cta: 'Schedule Pickup',
       features: [
-        'RO wash with fabric conditioning',
-        'Italian vacuum steam pressing',
-        'Sharp collar & cuff crease setting',
-        'Hanger delivery on request',
-        'Free doorstep pickup & drop'
+        'Wash, dry, steam press and fold',
+        'Sharp collars and cuffs on shirts',
+        'Smooth finish on kurtas and trousers',
+        'Photo record of every pickup',
+        'Free doorstep pickup & delivery'
       ]
     },
     {
-      id: 'shoe-cleaning',
-      name: 'Shoe Cleaning',
-      badge: 'Footwear Spa',
+      id: 'alteration-dry-clean',
+      name: quoteServices[0]?.name || 'Alteration & Dry Cleaning',
+      badge: 'Free Quote',
       badgeClass: 'badge-light-orange',
-      price: '₹199',
-      unit: '/ pair',
-      turnaround: '48 Hours',
-      description: 'Complete sole-to-lace rejuvenation for sneakers, leather shoes, loafers & sports pairs.',
+      price: 'On request',
+      unit: '',
+      turnaround: 'quoted per item',
+      description: 'Suits, sarees, lehengas, hems and fittings. Describe the job, add a photo, and we’ll send you a price.',
       cardTheme: 'pricing-card-light',
       isPopular: false,
+      cta: 'Get a Quote',
       features: [
-        'Deep upper & sole scrubbing',
-        'Shoe lace wash & reshaping',
-        'Antibacterial deodorization',
-        'Suede & leather material conditioning',
-        'Moisture-free protective packaging'
+        'Tell us what you need in the app',
+        'We reply with a fixed price',
+        'Nothing is booked until you accept',
+        'Careful handling of silks and delicates',
+        'Free doorstep pickup & delivery'
       ]
     }
   ];
@@ -88,7 +95,7 @@ export const LaundyPricing = ({ onOpenBooking }) => {
               Simple Pricing
             </motion.h2>
             <p className="pricing-subtitle-text">
-              Fair rates by kg and piece with free doorstep pickup across Bengaluru.
+              Two simple per-kilo prices, and a free quote for specialist care. Free doorstep pickup and delivery.
             </p>
           </div>
 
@@ -103,8 +110,8 @@ export const LaundyPricing = ({ onOpenBooking }) => {
           </motion.div>
         </div>
 
-        {/* 4-Card Pricing Grid */}
-        <div className="laundy-pricing-cards-grid-4">
+        {/* Pricing cards */}
+        <div className="laundy-pricing-cards-grid-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', maxWidth: 1100, margin: '0 auto' }}>
           {pricingPlans.map((plan, idx) => {
             const isDark = plan.cardTheme === 'pricing-card-dark';
             const isHighlight = plan.cardTheme === 'pricing-card-highlight';
@@ -178,10 +185,10 @@ export const LaundyPricing = ({ onOpenBooking }) => {
                     whileHover={{ scale: 1.04 }}
                     whileTap={{ scale: 0.96 }}
                   >
-                    <span>Schedule Pickup</span>
+                    <span>{plan.cta}</span>
                   </motion.button>
                   <span className={`pricing-turnaround-tag ${isDark ? 'text-white-sub' : ''}`}>
-                    ⚡ Ready in {plan.turnaround}
+                    ⚡ {plan.id === 'alteration-dry-clean' ? 'Timeline' : 'Ready in'} {plan.turnaround}
                   </span>
                 </div>
               </motion.div>

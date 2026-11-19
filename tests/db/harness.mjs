@@ -24,7 +24,7 @@ export const t = (name, cond, extra = '') => {
 };
 export const finish = () => { console.log(failures ? `\n${failures} FAILED` : '\nall passed'); process.exit(failures ? 1 : 0); };
 
-export async function makeDb({ upTo } = {}) {
+export async function makeDb({ upTo, realCatalog = false } = {}) {
   const db = new PGlite();
   await db.exec(`
     create role anon nologin; create role authenticated nologin; create role service_role nologin bypassrls;
@@ -49,6 +49,13 @@ export async function makeDb({ upTo } = {}) {
     try { await db.exec(fs.readFileSync(path.join(MIGRATIONS, f), 'utf8')); }
     catch (e) { console.log(`MIGRATION ${f} FAILED:`, e.message, e.detail || '', e.hint || ''); process.exit(2); }
   }
+  // The older tests were written against the original catalogue (₹49 / ₹69 …). Restore it unless a test wants the real launch catalogue.
+  if (!realCatalog) await db.exec(`
+    update service_rates set active = true where kind = 'standard' and not price_on_request;
+    update service_rates set name = 'Wash & Steam Iron', rate = 69 where id = 'wash-iron';
+    update service_rates set name = 'Wash, Dry & Fold', rate = 49 where id = 'wash-fold';`);
+  // Migrations and the catalogue restore above write audit rows; tests expect a clean log, like a fresh database.
+  await db.exec(`alter table audit_log disable trigger audit_immutable_trg; delete from audit_log; alter table audit_log enable trigger audit_immutable_trg;`).catch(() => {});
   await db.exec('grant execute on all functions in schema public to service_role');
   return db;
 }

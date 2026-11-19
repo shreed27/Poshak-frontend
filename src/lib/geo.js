@@ -4,7 +4,8 @@
 // (Google Maps / Mapbox / Ola Maps) — public servers are rate limited.
 
 const NOMINATIM = 'https://nominatim.openstreetmap.org';
-const OSRM = 'https://router.project-osrm.org';
+// Public OSRM demo server is fine for a pilot but rate limited. Point VITE_OSRM_URL at your own OSRM / OpenRouteService / Mapbox-compatible endpoint for production.
+const OSRM = (import.meta.env.VITE_OSRM_URL || 'https://router.project-osrm.org').replace(/\/$/, '');
 
 const toRad = (d) => (d * Math.PI) / 180;
 

@@ -83,6 +83,7 @@
   color: #0a0a0a;
   border-bottom: 2px solid #0a0a0a;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .address-sub-text {
@@ -539,8 +540,10 @@
 .services-selected-float-bar {
   position: fixed;
   bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
+  /* centred without transform: framer-motion animates transform and would undo translateX(-50%) */
+  left: 0;
+  right: 0;
+  margin: 0 auto;
   width: min(92%, 620px);
   background: #111827;
   color: #ffffff;
@@ -557,7 +560,6 @@
 }
 
 .services-selected-float-bar:hover {
-  transform: translateX(-50%) translateY(-2px);
   box-shadow: 0 16px 42px rgba(0, 0, 0, 0.45);
 }
 
@@ -1462,13 +1464,16 @@
     display: none; /* Mobile users use bottom nav / search inside views */
   }
 
-  /* In mobile header, hide the desktop text nav buttons (Laundry, Orders, Account) */
-  .swiggy-header-right .swiggy-nav-pill-btn:not(:last-child) {
+  /* In mobile header, hide the desktop nav buttons (Laundry, Orders, Account, Cart): the bottom dock has them */
+  .swiggy-header-right .swiggy-nav-pill-btn {
     display: none;
   }
 
+  .swiggy-header-left { min-width: 0; flex-shrink: 1; }
+  .swiggy-header-right { flex-shrink: 0; }
   .swiggy-address-btn {
     max-width: 200px;
+    min-width: 0;
   }
 
   .address-sub-text {
@@ -1717,3 +1722,19 @@
   }
 }
 
+
+/* Language picker */
+.psk-lang {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid #e5e7eb;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23686b78' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 0.6rem center;
+  border-radius: 999px;
+  padding: 0.4rem 1.6rem 0.4rem 0.8rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0a0a0a;
+  cursor: pointer;
+}
+.psk-lang.compact { padding: 0.35rem 1.4rem 0.35rem 0.65rem; font-size: 0.78rem; }

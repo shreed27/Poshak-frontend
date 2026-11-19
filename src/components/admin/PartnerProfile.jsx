@@ -5,6 +5,7 @@ import { inr } from '../../lib/csv';
 import { statusMeta, kycMeta, VEHICLES, PAYOUT_CYCLES, DAYS, dayStr, hhmm, expiry, initials } from '../../lib/partners';
 import { useCatalog } from '../../context/CatalogContext';
 import { Field } from './ui';
+import { PartnerDocs } from './PartnerDocs';
 
 // Banner shown on every screen when the admin has paused / not yet activated this partner.
 export const StatusBanner = ({ profile }) => {
@@ -103,6 +104,11 @@ export const PartnerProfile = ({ role, profile, reload }) => {
           <Row k="Contract">{profile.contract_end ? `Until ${dayStr(profile.contract_end)}` : 'Open-ended'}</Row>
         </div>
         <p className="st-note"><AlertTriangle size={13} /> Bank, ID and pay-rate changes can only be made by the admin.</p>
+      </div>
+
+      <div className="panel">
+        <header><h3>My documents</h3><span className="ops-muted">Upload clear photos — the admin reviews them</span></header>
+        <PartnerDocs email={profile.email} role={role} />
       </div>
 
       <div className="panel">

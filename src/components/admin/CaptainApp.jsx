@@ -9,15 +9,20 @@ import { useCatalog } from '../../context/CatalogContext';
 import { getDeliveryQr } from '../../lib/payments';
 import { OpsGate } from './OpsGate';
 import { SosButton, EarningsTab } from './CaptainExtras';
-import { RiderStrip, RiderWarnings, RiderHistory } from './RiderExtras';
+import { RiderStrip, RiderWarnings, RiderHistory, RiderNav } from './RiderExtras';
+import { cachedRoute, tuneMinutes, trackingSettings } from '../../lib/tracking';
+import { haversineKm } from '../../lib/geo';
 import { PartnerProfile, StatusBanner, useMyProfile } from './PartnerProfile';
+import { InstallPrompt } from '../InstallPrompt';
+import { useT, LangSwitch } from '../../i18n';
 import './ops2.css';
 import { NotificationBell } from '../NotificationBell';
 import { PhotoCapture, GarmentChecklist, checklistFrom, totalPieces } from './PhotoCapture';
 import { canStartDelivery } from '../../lib/orderStatus';
 
 const SELECT = '*, order_events(status, created_at)';
-const PUSH_EVERY_MS = 4000;
+const PUSH_ACTIVE_MS = 5000;     // while heading to a customer: customers are watching
+const PUSH_IDLE_MS = 20000;      // online but no job: save battery and database writes
 
 // Customer unavailable: records the attempt, tells the customer, alerts ops.
 const NoShowButton = ({ o, stage, run }) => (
@@ -199,6 +204,7 @@ const DeliveryPanel = ({ o, run }) => {
 };
 
 const Captain = () => {
+  const { t } = useT();
   const { session, logout } = useAuth();
   const { settings } = useCatalog();
   const uid = session.user.id;
@@ -214,6 +220,11 @@ const Captain = () => {
   const [tab, setTab] = useState('jobs');
   const watchId = useRef(null);
   const lastPush = useRef(0);
+  const [nav, setNav] = useState(null);           // road route + ETA to the job we are heading to
+  const navRef = useRef(null);
+  const ordersRef = useRef([]);
+  const tuneRef = useRef({});
+  const wakeRef = useRef(null);
 
   const load = useCallback(async () => {
     const [{ data, error: err }, { data: pay }, { data: sm }] = await Promise.all([
@@ -234,6 +245,8 @@ const Captain = () => {
   }, [load, uid]);
 
   const active = orders.filter((o) => o.status === 'active');
+  ordersRef.current = orders;
+  tuneRef.current = trackingSettings(settings);
   const done = orders.filter((o) => o.status !== 'active').slice(0, 5);
 
   // One place for every action: call the server function, show its message if it refuses, refresh.
@@ -245,6 +258,9 @@ const Captain = () => {
   const stopSharing = useCallback(() => {
     if (watchId.current != null) navigator.geolocation.clearWatch(watchId.current);
     watchId.current = null;
+    try { wakeRef.current?.release(); } catch { /* ignore */ }
+    wakeRef.current = null;
+    navRef.current = null; setNav(null);
     setSharing(false);
     supabase.rpc('captain_set_online', { p_online: false });
   }, []);
@@ -254,11 +270,33 @@ const Captain = () => {
     setGpsError('');
     watchId.current = navigator.geolocation.watchPosition(
       async (pos) => {
-        const { latitude: lat, longitude: lng } = pos.coords;
+        const { latitude: lat, longitude: lng, heading, speed } = pos.coords;
         setLastFix({ lat, lng, at: Date.now() });
-        if (Date.now() - lastPush.current < PUSH_EVERY_MS) return;
+        // The job we are heading to: nearest accepted pickup, or a delivery in progress.
+        const here = { lat, lng };
+        const target = ordersRef.current
+          .filter((o) => o.customerLocation && (o.dbStatus === 'out_for_delivery' || (o.dbStatus === 'captain_assigned' && o.assignment === 'accepted')))
+          .sort((x, y) => haversineKm(here, x.customerLocation) - haversineKm(here, y.customerLocation))[0];
+        if (Date.now() - lastPush.current < (target ? PUSH_ACTIVE_MS : PUSH_IDLE_MS)) return;
         lastPush.current = Date.now();
-        const { error: err } = await supabase.rpc('captain_update_location', { p_lat: lat, p_lng: lng });
+        const extra = {};
+        if (target) {
+          const prev = navRef.current;
+          const moved = prev && prev.orderId === target.dbId ? haversineKm(prev.from, here) : Infinity;
+          let route = prev && prev.orderId === target.dbId && moved < 0.12 && Date.now() - prev.at < 25000 ? prev.route : null;
+          if (!route) { try { route = await cachedRoute(here, target.customerLocation); } catch { route = null; } if (route) navRef.current = { orderId: target.dbId, from: here, at: Date.now(), route }; }
+          if (route) {
+            const minutes = tuneMinutes(route.minutes, tuneRef.current);
+            extra.p_order = target.dbId; extra.p_eta_min = minutes; extra.p_km = Number(route.km.toFixed(2));
+            setNav({ orderId: target.dbId, minutes, km: route.km, points: route.points, routed: route.routed, at: Date.now() });
+          }
+        } else if (navRef.current) { navRef.current = null; setNav(null); }
+        const { error: err } = await supabase.rpc('captain_update_location', {
+          p_lat: lat, p_lng: lng,
+          p_heading: Number.isFinite(heading) ? Math.round(heading) : null,
+          p_speed_kmh: Number.isFinite(speed) && speed != null ? Math.round(speed * 3.6) : null,
+          ...extra
+        });
         if (err) setGpsError(err.message);
       },
       (err) => {
@@ -269,17 +307,26 @@ const Captain = () => {
     );
     setSharing(true);
     supabase.rpc('captain_set_online', { p_online: true });
+    // Keep the screen awake so GPS keeps flowing while riding (not supported everywhere — fine if it fails).
+    navigator.wakeLock?.request('screen').then((l) => { wakeRef.current = l; }).catch(() => {});
   };
-  useEffect(() => () => { if (watchId.current != null) navigator.geolocation.clearWatch(watchId.current); }, []);
+  useEffect(() => () => { if (watchId.current != null) navigator.geolocation.clearWatch(watchId.current); try { wakeRef.current?.release(); } catch { /* ignore */ } }, []);
+  // The browser drops the wake lock when the tab is hidden; take it again when the rider comes back.
+  useEffect(() => {
+    const onVis = () => { if (document.visibilityState === 'visible' && watchId.current != null && !wakeRef.current) navigator.wakeLock?.request('screen').then((l) => { wakeRef.current = l; l.addEventListener?.('release', () => { wakeRef.current = null; }); }).catch(() => {}); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, []);
 
   return (
     <div className="ops-root ops-captain">
       <header className="ops-top">
         <div className="ops-brand">Poshak <span>Rider</span></div>
         <div className="ops-top-right">
+          <LangSwitch compact />
           <SosButton activeOrderId={orders.find((o) => o.status === 'active')?.dbId} />
           <NotificationBell userId={uid} onNew={() => { try { navigator.vibrate?.(200); } catch { /* ignore */ } }} />
-          <button className="ops-icon" onClick={() => { logout(); window.location.hash = '#/rider'; }}><LogOut size={16} /></button>
+          <button className="ops-icon" onClick={logout}><LogOut size={16} /></button>
         </div>
       </header>
 
@@ -291,6 +338,7 @@ const Captain = () => {
         </div>
       )}
 
+      <InstallPrompt />
       <StatusBanner profile={profile} />
       <RiderWarnings profile={profile} />
       <RiderStrip s={sum} cash={cash} />
@@ -298,24 +346,24 @@ const Captain = () => {
       <div className={`ops-share ${sharing ? 'on' : ''}`}>
         <Radio size={18} />
         <div>
-          <b>{sharing ? 'Sharing live location' : 'Location sharing is off'}</b>
-          <span>{sharing && lastFix ? `Last fix ${new Date(lastFix.at).toLocaleTimeString()}` : 'Customers see you on their map while this is on'}</span>
+          <b>{sharing ? t('rider.sharing') : t('rider.sharingOff')}</b>
+          <span>{sharing && lastFix ? `Last fix ${new Date(lastFix.at).toLocaleTimeString()}` : t('rider.sharingHelp')}</span>
         </div>
-        <button className="ops-btn ops-btn-primary" onClick={sharing ? stopSharing : startSharing}>{sharing ? 'Stop' : 'Go online'}</button>
+        <button className="ops-btn ops-btn-primary" onClick={sharing ? stopSharing : startSharing}>{sharing ? t('rider.stop') : t('rider.goOnline')}</button>
       </div>
 
-      <div className="cap-cash"><Wallet size={16} /> Cash in hand to deposit <b>₹{cash}</b></div>
+      <div className="cap-cash"><Wallet size={16} /> {t('rider.cashHand')} <b>₹{cash}</b></div>
 
       {gpsError && <div className="ops-error">{gpsError}</div>}
       {error && <div className="ops-error">{error}</div>}
 
-      <div className="cap-tabs">{[['jobs', `Jobs${active.length ? ` (${active.length})` : ''}`], ['earn', 'Earnings'], ['history', 'History'], ['profile', 'Profile']].map(([k, l]) => <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}</div>
+      <div className="cap-tabs">{[['jobs', `${t('rider.tab.jobs')}${active.length ? ` (${active.length})` : ''}`], ['earn', t('rider.tab.earn')], ['history', t('rider.tab.history')], ['profile', t('rider.tab.profile')]].map(([k, l]) => <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}</div>
       {tab === 'earn' && <EarningsTab />}
       {tab === 'history' && <RiderHistory orders={orders} />}
       {tab === 'profile' && <PartnerProfile role="captain" profile={profile} reload={reloadProfile} />}
       {tab === 'jobs' && <>
-      <h3 className="ops-h">My jobs ({active.length})</h3>
-      {active.length === 0 && <div className="ops-card ops-empty">Nothing assigned yet. New jobs appear here instantly.</div>}
+      <h3 className="ops-h">{t('rider.myJobs')} ({active.length})</h3>
+      {active.length === 0 && <div className="ops-card ops-empty">{t('rider.noJobs')}</div>}
 
       {active.map((o) => (
         <div key={o.dbId} className="ops-card">
@@ -331,6 +379,9 @@ const Captain = () => {
           {o.deliverySlot && <p className="ops-line"><b>Deliver:</b> {o.deliverySlot}</p>}
           {o.failedAttempts > 0 && <p className="ops-line" style={{ color: '#b45309' }}>{o.failedAttempts} failed attempt(s) so far</p>}
           {o.specialInstructions && <p className="ops-line">Note: {o.specialInstructions}</p>}
+          {(o.dbStatus === 'out_for_delivery' || (o.dbStatus === 'captain_assigned' && o.assignment === 'accepted')) && (
+            <RiderNav o={o} nav={nav && nav.orderId === o.dbId ? nav : null} fix={lastFix} sharing={sharing} onStart={startSharing} />
+          )}
           <div className="ops-actions">
             <a className="ops-btn" target="_blank" rel="noreferrer"
               href={`https://www.google.com/maps/dir/?api=1&destination=${o.customerLocation.lat},${o.customerLocation.lng}&travelmode=driving`}>

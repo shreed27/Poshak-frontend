@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, MapPin, Phone, Navigation, RefreshCw, LogOut, UserCheck, ChevronRight, XCircle, LayoutDashboard, ShoppingBag, Users, Wallet, LifeBuoy, Bike, Shirt, Settings, ScrollText, UserCog, Search, Download, RotateCcw } from 'lucide-react';
+import { Bell, MapPin, Phone, Navigation, RefreshCw, LogOut, UserCheck, ChevronRight, XCircle, LayoutDashboard, ShoppingBag, Users, Wallet, LifeBuoy, Bike, Shirt, Radar, Activity, FileQuestion, Settings, ScrollText, UserCog, Search, Download, RotateCcw } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { withSecrets, subscribeOrders } from '../../lib/ordersApi';
@@ -9,6 +9,10 @@ import { OpsGate } from './OpsGate';
 import { AdminSettings } from './AdminSettings';
 import { AdminTickets } from './AdminTickets';
 import { AdminPartners } from './AdminPartners';
+import { AdminLive } from './AdminLive';
+import { AdminSystem } from './AdminSystem';
+import { AdminQuotes } from './AdminQuotes';
+import { fmtMin, freshness, agoText } from '../../lib/tracking';
 import { NotificationBell } from '../NotificationBell';
 import { InvoiceButton } from '../InvoiceButton';
 import { useSignedUrls } from '../../lib/photos';
@@ -18,6 +22,15 @@ import { AdminCustomers } from './AdminCustomers';
 import { AdminFinance } from './AdminFinance';
 import { AdminAudit } from './AdminAudit';
 import { RefundDialog } from './RefundDialog';
+import { useCustomerPhotos } from '../../lib/photos';
+
+// Photos the customer attached when booking (stored privately under the order's id).
+const CustomerPhotos = ({ order }) => {
+  const stored = useCustomerPhotos(order.dbId);
+  const list = [...(order.attachedPhotos || []), ...stored];
+  if (!list.length) return null;
+  return <div><p className="ops-line">Customer photos</p><div className="ops-photos">{list.map((u, i) => <a key={i} href={u} target="_blank" rel="noreferrer"><img src={u} alt="" /></a>)}</div></div>;
+};
 import './ops2.css';
 
 const SELECT = '*, order_events(status, created_at)';
@@ -194,8 +207,8 @@ const OrderChecks = ({ order }) => {
 };
 
 const NAV = [
-  ['overview', 'Overview', LayoutDashboard], ['orders', 'Orders', ShoppingBag], ['customers', 'Customers', Users], ['riders', 'Riders', Bike], ['laundromats', 'Laundromats', Shirt],
-  ['finance', 'Finance', Wallet], ['tickets', 'Complaints', LifeBuoy], ['settings', 'Prices & settings', Settings], ['audit', 'Audit log', ScrollText], ['team', 'Team & admins', UserCog]
+  ['overview', 'Overview', LayoutDashboard], ['orders', 'Orders', ShoppingBag], ['quotes', 'Quotes', FileQuestion], ['live', 'Live map', Radar], ['customers', 'Customers', Users], ['riders', 'Riders', Bike], ['laundromats', 'Laundromats', Shirt],
+  ['finance', 'Finance', Wallet], ['tickets', 'Complaints', LifeBuoy], ['settings', 'Prices & settings', Settings], ['audit', 'Audit log', ScrollText], ['system', 'System health', Activity], ['team', 'Team & admins', UserCog]
 ];
 
 const Dashboard = () => {
@@ -210,11 +223,21 @@ const Dashboard = () => {
   const [okMsg, setOkMsg] = useState('');
   const [alerts, setAlerts] = useState([]);
   const [ticketCount, setTicketCount] = useState(0);
+  const [quoteCount, setQuoteCount] = useState(0);
   const [filter, setFilter] = useState('active');
   const [selectedId, setSelectedId] = useState(null);
   const [flash, setFlash] = useState(null);
   const [error, setError] = useState('');
   const known = useRef(null);
+  const unseen = useRef(0);
+  // Ask once for permission to show new-order notifications, and clear the tab-title count when the admin looks again.
+  useEffect(() => {
+    try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch { /* ignore */ }
+    const base = document.title;
+    const onVis = () => { if (!document.hidden) { unseen.current = 0; document.title = base; } };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { document.removeEventListener('visibilitychange', onVis); document.title = base; };
+  }, []);
 
   const load = useCallback(async () => {
     const { data, error: err } = await supabase.from('orders').select(SELECT).order('created_at', { ascending: false }).limit(300);
@@ -225,8 +248,19 @@ const Dashboard = () => {
       const fresh = list.filter((o) => !known.current.has(o.dbId));
       if (fresh.length) {
         beep();
-        setFlash(`New order #${fresh[0].orderId} · ₹${fresh[0].totalAmount}`);
+        const text = `New order #${fresh[0].orderId} · ₹${fresh[0].totalAmount}`;
+        setFlash(text);
         setTimeout(() => setFlash(null), 6000);
+        // Also reach the admin when this tab is in the background: a system notification + count in the tab title.
+        if (document.hidden) {
+          unseen.current += fresh.length;
+          document.title = `(${unseen.current}) New order · Poshak Ops`;
+          try {
+            if ('Notification' in window && Notification.permission === 'granted') {
+              new Notification('Poshak: new order', { body: `${text}\n${fresh[0].pickupSlot || ''}`, tag: 'poshak-new-order', icon: '/icon-192.png' });
+            }
+          } catch { /* some mobile browsers only allow notifications from a service worker */ }
+        }
       }
     }
     known.current = new Set(list.map((o) => o.dbId));
@@ -238,6 +272,8 @@ const Dashboard = () => {
     });
     const { count: tc } = await supabase.from('tickets').select('id', { count: 'exact', head: true }).in('status', ['open', 'in_review']);
     setTicketCount(tc || 0);
+    const { count: qc, error: qe } = await supabase.from('quote_requests').select('id', { count: 'exact', head: true }).eq('status', 'requested');
+    if (!qe) setQuoteCount(qc || 0);
     const { data: cash } = await supabase.from('payments').select('amount, collected_by').eq('method', 'cash').eq('deposited', false);
     setCashRows(cash || []);
   }, []);
@@ -309,13 +345,13 @@ const Dashboard = () => {
           <NotificationBell userId={session.user.id} />
           <span className="ops-user">{session.user.email}</span>
           <button className="ops-icon" onClick={load} title="Refresh"><RefreshCw size={16} /></button>
-          <button className="ops-icon" onClick={() => { logout(); window.location.hash = '#/admin'; }} title="Sign out"><LogOut size={16} /></button>
+          <button className="ops-icon" onClick={logout} title="Sign out"><LogOut size={16} /></button>
         </div>
       </header>
 
       <div className="ops-shell">
       <nav className="ops-nav">
-        {NAV.map(([k, l, Icon]) => <button key={k} className={view === k ? 'on' : ''} onClick={() => setView(k)}><Icon size={17} /><span>{l}</span>{k === 'orders' && alerts.length > 0 ? <span className="ops-dot">{alerts.length}</span> : null}{k === 'tickets' && ticketCount > 0 ? <span className="ops-dot">{ticketCount}</span> : null}</button>)}
+        {NAV.map(([k, l, Icon]) => <button key={k} className={view === k ? 'on' : ''} onClick={() => setView(k)}><Icon size={17} /><span>{l}</span>{k === 'orders' && alerts.length > 0 ? <span className="ops-dot">{alerts.length}</span> : null}{k === 'tickets' && ticketCount > 0 ? <span className="ops-dot">{ticketCount}</span> : null}{k === 'quotes' && quoteCount > 0 ? <span className="ops-dot">{quoteCount}</span> : null}</button>)}
       </nav>
       <main className="ops-main">
 
@@ -323,7 +359,7 @@ const Dashboard = () => {
       {error && <div className="ops-error">{error}</div>}
 
       {okMsg && <div className="ops-ok-bar" onClick={() => setOkMsg('')}>{okMsg}</div>}
-      {view === 'overview' ? <AdminAnalytics /> : view === 'customers' ? <AdminCustomers /> : view === 'finance' ? <AdminFinance /> : view === 'audit' ? <AdminAudit /> : view === 'team' ? <Team myEmail={session.user.email} /> : view === 'settings' ? <AdminSettings /> : view === 'tickets' ? <AdminTickets onCount={setTicketCount} /> : view === 'riders' ? <AdminPartners role="captain" /> : view === 'laundromats' ? <AdminPartners role="cleaner" /> : (<>
+      {view === 'quotes' ? <AdminQuotes onCount={setQuoteCount} /> : view === 'system' ? <AdminSystem /> : view === 'live' ? <AdminLive /> : view === 'overview' ? <AdminAnalytics /> : view === 'customers' ? <AdminCustomers /> : view === 'finance' ? <AdminFinance /> : view === 'audit' ? <AdminAudit /> : view === 'team' ? <Team myEmail={session.user.email} /> : view === 'settings' ? <AdminSettings /> : view === 'tickets' ? <AdminTickets onCount={setTicketCount} /> : view === 'riders' ? <AdminPartners role="captain" /> : view === 'laundromats' ? <AdminPartners role="cleaner" /> : (<>
       {alerts.length > 0 && (
         <div className="ops-alerts">
           {alerts.map((a) => (
@@ -378,7 +414,7 @@ const Dashboard = () => {
                 </div>
                 <div className="ops-order-name">{o.serviceName}</div>
                 <div className="ops-order-meta">₹{o.totalAmount} · {o.paymentStatus === 'paid' ? 'Paid' : o.paymentMode === 'online' ? 'Online · due' : 'COD'} · {o.pickupSlot}</div>
-                <div className="ops-order-meta">{ago(o.createdAtIso)}{o.rider ? ` · ${o.rider.name}` : ' · unassigned'}</div>
+                <div className="ops-order-meta">{ago(o.createdAtIso)}{o.rider ? ` · ${o.rider.name}` : ' · unassigned'}{o.eta ? <b className="ops-eta"> · ETA {fmtMin(o.eta.minutes)}</b> : ''}</div>
               </button>
             ))}
           </div>
@@ -399,6 +435,9 @@ const Dashboard = () => {
                   Open in Google Maps
                 </a>
               </p>
+              {selected.eta && (() => { const f = freshness(selected.captainUpdatedAt); return (
+                <p className="ops-line"><Navigation size={14} /> <span><b>Live:</b> {selected.rider?.name || 'Rider'} is {fmtMin(selected.eta.minutes)} ({selected.eta.km} km) from the {selected.eta.leg === 'delivery' ? 'drop' : 'pickup'} · GPS {f.state === 'live' ? 'live' : `updated ${agoText(f.secs)}`}</span></p>
+              ); })()}
               <p className="ops-line"><b>{selected.serviceName}</b></p>
               <p className="ops-line">
                 {selected.finalAmount != null ? `Final ₹${selected.finalAmount} (estimate was ₹${selected.estimatedAmount})` : `Estimate ₹${selected.estimatedAmount} — not weighed yet`}
@@ -417,9 +456,7 @@ const Dashboard = () => {
               <p className="ops-line">Pickup OTP <b>{selected.pickupOtp}</b> · Delivery OTP <b>{selected.deliveryOtp}</b></p>
               <OrderChecks order={selected} />
               {selected.dbStatus === 'delivered' && <p className="ops-line"><InvoiceButton orderId={selected.dbId} className="ops-btn" /></p>}
-              {selected.attachedPhotos.length > 0 && (
-                <div className="ops-photos">{selected.attachedPhotos.map((u, i) => <img key={i} src={u} alt="" />)}</div>
-              )}
+              <CustomerPhotos order={selected} />
 
               {selected.status === 'active' && (
                 <>

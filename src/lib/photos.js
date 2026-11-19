@@ -47,3 +47,20 @@ export const useSignedUrls = (paths) => {
   }, [key]);
   return urls;
 };
+
+// Photos the customer attached at checkout: files under order-photos/<orderId>/customer-*.jpg, shown with signed links.
+export const useCustomerPhotos = (orderId) => {
+  const [urls, setUrls] = useState([]);
+  useEffect(() => {
+    if (!supabase || !orderId) return undefined;
+    let alive = true;
+    supabase.storage.from('order-photos').list(String(orderId), { limit: 20, search: 'customer-' }).then(async ({ data }) => {
+      const paths = (data || []).filter((f) => f.name.startsWith('customer-')).map((f) => `${orderId}/${f.name}`);
+      if (!paths.length || !alive) return;
+      const { data: signed } = await supabase.storage.from('order-photos').createSignedUrls(paths, 3600);
+      if (alive) setUrls((signed || []).map((s) => s.signedUrl).filter(Boolean));
+    });
+    return () => { alive = false; };
+  }, [orderId]);
+  return urls;
+};

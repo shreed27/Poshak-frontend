@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, LocateFixed, X, CheckCircle2 } from 'lucide-react';
+import { ChevronRight, LocateFixed, X, CheckCircle2 } from 'lucide-react';
 import { useGeolocation } from '../../hooks/useGeolocation';
 import { getRoute, haversineKm } from '../../lib/geo';
-import { isServiceable } from '../../lib/serviceArea';
+import { isServiceable, SERVICE_AREA } from '../../lib/serviceArea';
 import { getProgress, applyStep, enrichOrder, demoCaptainStart, STEP_LABELS } from '../../lib/orderEngine';
 import { LocationPickerModal } from './LocationPickerModal';
 import { HelpCenter } from './HelpCenter';
 import { placeOrder, fetchMyOrders, cancelMyOrder, rateMyOrder, subscribeOrders } from '../../lib/ordersApi';
 import { supabase } from '../../lib/supabase';
 import { payOnline } from '../../lib/payments';
+import { uploadOrderPhoto } from '../../lib/photos';
 import './LocationTracking.css';
 
 // Swiggy Web Components
@@ -17,10 +18,13 @@ import { SwiggyHeader } from './SwiggyHeader';
 import { SwiggyHomeView } from './SwiggyHomeView';
 import { SwiggyOrdersView } from './SwiggyOrdersView';
 import { SwiggyAccountView } from './SwiggyAccountView';
-import { SwiggyCartDrawer } from './SwiggyCartDrawer';
 import { BookingFlowModal } from './BookingFlowModal';
 import { MobileBottomNav } from './MobileBottomNav';
+import { QuoteRequestModal } from './QuoteRequestModal';
+import { QuotesPanel } from './QuotesPanel';
+import { InstallPrompt } from '../InstallPrompt';
 import './SwiggyApp.css';
+import './QuickCommerce.css';
 
 import { useCatalog } from '../../context/CatalogContext';
 
@@ -28,6 +32,9 @@ import { useCatalog } from '../../context/CatalogContext';
 // leak into a real, location-aware session.
 const SEEDED_ADDRESS_IDS = ['addr-1', 'addr-2', 'addr-3'];
 const SEEDED_ORDER_IDS = ['PSK-89241', 'PSK-81045', 'PSK-76512'];
+
+// Shown in the header until the customer picks a pickup address.
+const NO_ADDRESS = { id: 'none', label: 'Set location', streetArea: '', flatBuilding: '', city: '', pincode: '', phone: '', landmark: '', lat: SERVICE_AREA.center.lat, lng: SERVICE_AREA.center.lng, placeholder: true };
 
 const loadJson = (key, fallback) => {
   try {
@@ -48,25 +55,24 @@ const STEP_TOASTS = [
 export const MainApp = ({ user, logout, onBackToLanding }) => {
   // Navigation: 'laundry' | 'orders' | 'account'
   const [activeTab, setActiveTab] = useState('laundry');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-  const [selectedServices, setSelectedServices] = useState(['wash-iron']);
 
-  // Cart State (Persisted)
-
-  const [cartItems, setCartItems] = useState(() => {
-    try {
-      const saved = localStorage.getItem('poshak_cart');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
+  // The cart: { serviceId: estimated kg }. Remembered on this device until the order is placed.
+  const [basket, setBasket] = useState(() => {
+    const b = loadJson('poshak_basket', {});
+    return b && typeof b === 'object' && !Array.isArray(b) ? b : {};
+  });
+  const setKg = (id, kg) => setBasket((b) => {
+    const next = { ...b };
+    if (kg >= 1) next[id] = Math.round(kg); else delete next[id];
+    return next;
   });
 
-  // Orders State (Persisted)
+  // Orders State. Signed-in customers only ever see their real orders (loaded from the server below); the simulated "demo"
+  // orders are for local demo mode only, and any left over in this browser from earlier tests are discarded.
+  const signedInReal = Boolean(supabase && user?.isSupabase);
   const [orders, setOrders] = useState(() =>
-    loadJson('poshak_orders', []).filter(o => !SEEDED_ORDER_IDS.includes(o.orderId))
+    signedInReal ? [] : loadJson('poshak_orders', []).filter(o => !SEEDED_ORDER_IDS.includes(o.orderId))
   );
 
   // Addresses State (Persisted). Only addresses with real coordinates are valid.
@@ -83,6 +89,14 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
   const geo = useGeolocation();
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
   const [awayBannerDismissed, setAwayBannerDismissed] = useState(false);
+  const [isQuoteOpen, setIsQuoteOpen] = useState(false);
+  // No saved address yet: let the app paint first, then slide the location sheet up over it (like Swiggy / Zomato).
+  useEffect(() => {
+    if (activeAddress) return undefined;
+    const t = setTimeout(() => setIsLocationPickerOpen(true), 650);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [toast, setToast] = useState(null);
   const [help, setHelp] = useState(null);          // null | { orderId }
   const [now, setNow] = useState(() => Date.now());
@@ -101,12 +115,14 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
 
   // Local storage synchronization
   useEffect(() => {
-    localStorage.setItem('poshak_cart', JSON.stringify(cartItems));
-  }, [cartItems]);
+    try { localStorage.setItem('poshak_basket', JSON.stringify(basket)); localStorage.removeItem('poshak_cart'); } catch { /* ignore */ }
+  }, [basket]);
 
   useEffect(() => {
+    // Demo orders are remembered only in demo mode; with a real account the server is the source of truth.
+    if (signedInReal) { localStorage.removeItem('poshak_orders'); return; }
     localStorage.setItem('poshak_orders', JSON.stringify(orders.filter(o => !o.remote)));
-  }, [orders]);
+  }, [orders, signedInReal]);
 
   useEffect(() => {
     localStorage.setItem('poshak_addresses', JSON.stringify(addresses));
@@ -115,28 +131,6 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
   useEffect(() => {
     localStorage.setItem('poshak_wallet', walletBalance.toString());
   }, [walletBalance]);
-
-  // Cart Management Handlers
-  const handleAddToCart = (service) => {
-    setCartItems(prev => {
-      const existing = prev.find(i => i.id === service.id);
-      if (existing) {
-        return prev.map(i => i.id === service.id ? { ...i, quantity: i.quantity + 1 } : i);
-      }
-      return [...prev, { ...service, quantity: 1 }];
-    });
-  };
-
-  const handleRemoveFromCart = (serviceId) => {
-    setCartItems(prev => {
-      const existing = prev.find(i => i.id === serviceId);
-      if (!existing) return prev;
-      if (existing.quantity === 1) {
-        return prev.filter(i => i.id !== serviceId);
-      }
-      return prev.map(i => i.id === serviceId ? { ...i, quantity: i.quantity - 1 } : i);
-    });
-  };
 
   // Real orders from Supabase (realtime): admin/captain changes appear here instantly.
   const backendOn = Boolean(supabase && user?.isSupabase);
@@ -156,8 +150,9 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
           prevStatus.set(o.orderId, o.dbStatus);
         });
         const remoteCodes = new Set(remote.map(o => o.orderId));
-        // keep demo orders, drop optimistic copies now confirmed by the server
-        setOrders(prev => [...remote, ...prev.filter(o => !o.remote && !remoteCodes.has(o.orderId))]);
+        // The server's list wins. Only an order that was just placed and is still being saved stays on screen meanwhile;
+        // stale demo orders are dropped.
+        setOrders(prev => [...remote, ...prev.filter(o => !o.remote && o.pendingSave && !remoteCodes.has(o.orderId))]);
       } catch (err) {
         console.warn('Could not load orders:', err.message);
       }
@@ -178,11 +173,15 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
 
   // Order Placement: show it instantly, then (demo) fetch the road route or (real) save to Supabase.
   const handleConfirmOrder = (newOrder) => {
+    if (!activeAddress) { setIsLocationPickerOpen(true); return; }
     const start = demoCaptainStart(activeAddress);
     const straight = { points: [[start.lat, start.lng], [activeAddress.lat, activeAddress.lng]], routed: false };
     const order = enrichOrder(newOrder, { address: activeAddress, route: straight });
-    setOrders(prev => [order, ...prev]);
-    setCartItems([]);
+    // Real account: show the order instantly as 'received, finding a captain' (no simulated captain or timeline) until the server copy arrives.
+    const files = order.photoFiles || [];
+    delete order.photoFiles;
+    setOrders(prev => [backendOn ? { ...order, rider: null, route: null, dbStatus: 'placed', status: 'active', currentStep: 0, pendingSave: true } : order, ...prev]);
+    setBasket({});
     setActiveTab('orders');
     setToast({ text: STEP_TOASTS[0], key: Date.now() });
 
@@ -190,6 +189,11 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
       supabase.auth.getUser()
         .then(({ data }) => placeOrder(order, data.user))   // realtime/refetch swaps the optimistic copy for the saved one
         .then((saved) => {
+          // Photos go to private storage under the order's id (only the customer, its rider and admins can see them).
+          if (files.length) {
+            Promise.all(files.map((f) => uploadOrderPhoto(saved.dbId, f, 'customer')))
+              .catch((e) => setToast({ text: `Order placed, but a photo did not upload: ${e.message}`, key: Date.now() }));
+          }
           if (order.paymentMode === 'online') return handlePayNow(saved);
         })
         .catch((err) => {
@@ -298,34 +302,22 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
     if (def) setActiveAddress(def);
   };
 
-  // Service Selection & Direct Booking Handlers
-  const handleToggleService = (serviceId) => {
-    setSelectedServices(prev => {
-      if (prev.includes(serviceId)) {
-        return prev.length > 1 ? prev.filter(id => id !== serviceId) : prev;
-      } else {
-        return [...prev, serviceId];
-      }
-    });
-  };
-
-  const handleBookDirect = (serviceId) => {
-    if (serviceId) {
-      setSelectedServices([serviceId]);
-    }
-    setIsBookingModalOpen(true);
-  };
-
-  // Quick 1-tap reorder
+  // Quick 1-tap reorder: same services and weight as last time.
   const handleReorder = (pastOrder) => {
-    const matchingSvc = services.find(s => s.name === pastOrder.serviceName) || services[0];
-    setSelectedServices([matchingSvc.id]);
+    if (needAddress()) return;
+    const names = String(pastOrder.serviceName || '').split(' + ');
+    const picked = services.filter(s => names.includes(s.name));
+    const list = picked.length ? picked : services.slice(0, 1);
+    const each = Math.max(1, Math.round((Number(pastOrder.weightKg) || 4) / list.length));
+    setBasket(Object.fromEntries(list.map(s => [s.id, each])));
     setIsBookingModalOpen(true);
   };
 
   const activeOrder = orders.find(o => o.status === 'active') || null;
-  const totalCartCount = cartItems.reduce((acc, i) => acc + i.quantity, 0);
-  const cartSubtotal = cartItems.reduce((acc, i) => acc + (i.unitPrice * i.quantity), 0);
+  const basketLines = services.filter(s => basket[s.id] > 0);
+  const totalCartCount = basketLines.length;
+  const basketKg = basketLines.reduce((a, s) => a + basket[s.id], 0);
+  const basketEst = basketLines.reduce((a, s) => a + basket[s.id] * s.unitPrice, 0);
 
   // Distance between where the user physically is and the selected address
   const awayKm = useMemo(
@@ -333,24 +325,16 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
     [geo.coords, activeAddress]
   );
 
-  // Nothing works without a pickup point, so block until one exists.
-  if (!activeAddress) {
-    return (
-      <div className="swiggy-app-root">
-        <LocationPickerModal
-          isOpen
-          required
-          startWithDetect
-          onClose={() => {}}
-          geo={geo}
-          addresses={addresses}
-          activeAddress={activeAddress}
-          onSelectAddress={setActiveAddress}
-          onSaveAddress={handleAddAddress}
-        />
-      </div>
-    );
-  }
+  // The app is always visible. With no pickup address yet, the location sheet slides up over it (and reopens whenever
+  // someone tries to book), so nothing below ever has to cope with a missing address.
+  const address = activeAddress || NO_ADDRESS;
+  const needAddress = () => {
+    if (activeAddress) return false;
+    setIsLocationPickerOpen(true);
+    return true;
+  };
+  const openCart = () => { if (!needAddress()) setIsBookingModalOpen(true); };
+  const openQuote = () => { if (!needAddress()) setIsQuoteOpen(true); };
 
   return (
     <div className="swiggy-app-root">
@@ -359,17 +343,20 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
         user={user}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        addresses={addresses}
-        activeAddress={activeAddress}
-        onSelectAddress={setActiveAddress}
+        activeAddress={address}
         cartCount={totalCartCount}
-        onOpenCart={() => setIsCartOpen(true)}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        onBackToLanding={onBackToLanding}
+        onOpenCart={openCart}
         activeOrderCount={activeOrdersCount}
         onOpenLocation={() => setIsLocationPickerOpen(true)}
       />
+
+      {!activeAddress && !isLocationPickerOpen && (
+        <div className="psk-away-banner">
+          <LocateFixed size={16} />
+          <span>Add your pickup location to start booking.</span>
+          <button onClick={() => setIsLocationPickerOpen(true)}>Add location</button>
+        </div>
+      )}
 
       {/* You are somewhere other than your selected address (Swiggy-style nudge) */}
       {awayKm > 1.5 && !awayBannerDismissed && activeTab === 'laundry' && (
@@ -397,11 +384,9 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
               <SwiggyHomeView 
                 activeOrder={activeOrder}
                 onNavigateToOrders={() => setActiveTab('orders')}
-                selectedServiceIds={selectedServices}
-                onToggleService={handleToggleService}
-                onBookDirect={handleBookDirect}
-                onOpenBookingFlow={() => setIsBookingModalOpen(true)}
-                hasCartItems={cartItems.length > 0}
+                basket={basket}
+                onSetKg={setKg}
+                onRequestQuote={openQuote}
                 now={now}
               />
             </motion.div>
@@ -416,6 +401,11 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.18 }}
             >
+              {backendOn && user?.isSupabase && (
+                <div className="swiggy-feed-container" style={{ paddingBottom: 0 }}>
+                  <QuotesPanel userId={user.id} onRequest={openQuote} onAccepted={() => setToast({ text: 'Quote accepted — your pickup is booked', key: Date.now() })} />
+                </div>
+              )}
               <SwiggyOrdersView 
                 orders={orders}
                 now={now}
@@ -455,44 +445,16 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
         </AnimatePresence>
       </main>
 
-      {/* Floating Bottom Cart Bar (Swiggy Style) */}
-      {cartItems.length > 0 && !isCartOpen && (
-        <motion.div 
-          className="swiggy-floating-cart-bar"
-          initial={{ y: 80, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 80, opacity: 0 }}
-          onClick={() => setIsCartOpen(true)}
-        >
-          <div className="floating-cart-left">
-            <span className="cart-items-count-text">
-              {totalCartCount} {totalCartCount === 1 ? 'Item' : 'Items'} Added
-            </span>
-            <span className="cart-total-amount-text">
-              ₹{cartSubtotal}
-            </span>
-          </div>
-          <div className="floating-cart-right">
-            <span>View Cart</span>
-            <ArrowRight size={18} />
-          </div>
-        </motion.div>
+      {/* Sticky cart bar (quick-commerce style) */}
+      {totalCartCount > 0 && !isBookingModalOpen && activeTab === 'laundry' && (
+        <button type="button" className="qc-cartbar" onClick={openCart}>
+          <span className="qc-cartbar-l">
+            <b>{totalCartCount} {totalCartCount === 1 ? 'service' : 'services'} · about {basketKg} kg</b>
+            <span>≈ ₹{Math.round(basketEst)}</span>
+          </span>
+          <span className="qc-cartbar-r">Checkout <ChevronRight size={18} strokeWidth={2.6} /></span>
+        </button>
       )}
-
-      {/* Slide-In Cart Drawer */}
-      <AnimatePresence>
-        {isCartOpen && (
-          <SwiggyCartDrawer 
-            isOpen={isCartOpen}
-            onClose={() => setIsCartOpen(false)}
-            cartItems={cartItems}
-            onAddToCart={handleAddToCart}
-            onRemoveFromCart={handleRemoveFromCart}
-            activeAddress={activeAddress}
-            onConfirmOrder={handleConfirmOrder}
-          />
-        )}
-      </AnimatePresence>
 
       {/* Seamless Quick Booking Checkout Sheet */}
       <AnimatePresence>
@@ -500,11 +462,10 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
           <BookingFlowModal 
             isOpen={isBookingModalOpen}
             onClose={() => setIsBookingModalOpen(false)}
-            selectedServiceIds={selectedServices}
-            onToggleService={handleToggleService}
-            activeAddress={activeAddress}
-            addresses={addresses}
-            onSelectAddress={setActiveAddress}
+            basket={basket}
+            onSetKg={setKg}
+            activeAddress={address}
+            onChangeAddress={() => setIsLocationPickerOpen(true)}
             onConfirmOrder={handleConfirmOrder}
           />
         )}
@@ -512,9 +473,14 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
 
 
       <AnimatePresence>
+        {isQuoteOpen && <QuoteRequestModal address={activeAddress} onClose={() => setIsQuoteOpen(false)} />}
+      </AnimatePresence>
+
+      <AnimatePresence>
         {isLocationPickerOpen && (
           <LocationPickerModal
             isOpen
+            startWithDetect={!activeAddress}
             onClose={() => setIsLocationPickerOpen(false)}
             geo={geo}
             addresses={addresses}
@@ -543,12 +509,13 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
       </AnimatePresence>
 
       {/* Floating Bottom Nav Dock (Visible on Mobile <= 768px) */}
+      <InstallPrompt />
       <MobileBottomNav 
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         cartCount={totalCartCount}
         activeOrdersCount={activeOrdersCount}
-        onOpenCart={() => setIsCartOpen(true)}
+        onOpenCart={openCart}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { CatalogProvider } from './context/CatalogContext';
@@ -11,16 +11,19 @@ import { LaundyPricing } from './components/LaundyPricing';
 import { LaundyFAQ } from './components/LaundyFAQ';
 import { LaundyFooter } from './components/LaundyFooter';
 import { ServiceDetailModal } from './components/ServiceDetailModal';
-import { LiveOrderTrackerModal } from './components/LiveOrderTrackerModal';
-import { LoginPage } from './components/LoginPage';
-import { MainApp } from './components/main-app/MainApp';
-import { useCart } from './context/CartContext';
-import { AdminDashboard } from './components/admin/AdminDashboard';
-import { CaptainApp } from './components/admin/CaptainApp';
-import { StaffPortal } from './components/admin/StaffPortal';
 import { SlowLoading } from './components/StuckHelp';
-import { CleanerApp } from './components/admin/CleanerApp';
 import { isBackendConfigured } from './lib/supabase';
+
+// Each app is its own download: customers never fetch the admin dashboard, riders never fetch the customer site.
+const named = (loader, name) => lazy(() => loader().then((m) => ({ default: m[name] })));
+const LoginPage = named(() => import('./components/LoginPage'), 'LoginPage');
+const MainApp = named(() => import('./components/main-app/MainApp'), 'MainApp');
+const AdminDashboard = named(() => import('./components/admin/AdminDashboard'), 'AdminDashboard');
+const CaptainApp = named(() => import('./components/admin/CaptainApp'), 'CaptainApp');
+const CleanerApp = named(() => import('./components/admin/CleanerApp'), 'CleanerApp');
+const StaffPortal = named(() => import('./components/admin/StaffPortal'), 'StaffPortal');
+const PublicTrack = named(() => import('./components/PublicTrack'), 'PublicTrack');
+const Boot = ({ children }) => <Suspense fallback={<div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', color: '#888', fontFamily: 'system-ui' }}><SlowLoading /></div>}>{children}</Suspense>;
 
 // ?ref=CODE links: remember the code until the visitor signs in, then MainApp applies it.
 try {
@@ -31,11 +34,12 @@ try {
 export function AppContent() {
   const { user, isAuthenticated, logout, role, roleReady, authReady, session } = useAuth();
   const [currentView, setCurrentView] = useState(() => {
+    // Signed-in customers go straight into the app so they can order; signed-out visitors see the landing page.
+    // (Team members are always sent to their own app once their role is known.)
     try {
       const savedView = sessionStorage.getItem('poshak_view');
       if (savedView) return savedView;
-      const savedUser = localStorage.getItem('poshak_user');
-      return savedUser ? 'app' : 'landing';
+      return localStorage.getItem('poshak_user') ? 'app' : 'landing';
     } catch {
       return 'landing';
     }
@@ -43,7 +47,6 @@ export function AppContent() {
   const [activeTab, setActiveTab] = useState('home');
   const [selectedService, setSelectedService] = useState(null);
   const [bookingService, setBookingService] = useState(null);
-  const { setIsTrackerOpen } = useCart();
 
   // Each team role has its own app and sign-in page: /#/admin, /#/rider, /#/laundry (and /#/staff sends anyone to theirs)
   const [hash, setHash] = useState(() => window.location.hash);
@@ -53,11 +56,45 @@ export function AppContent() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
+  const clearHash = () => {
+    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    setHash('');
+  };
+
   // Staff only ever see their own app: wherever they are, they are pulled back to it.
   const staffHome = { admin: '#/admin', captain: '#/rider', cleaner: '#/laundry' }[role] || null;
   useEffect(() => {
-    if (isAuthenticated && roleReady && staffHome && hash !== staffHome) window.location.hash = staffHome;
+    if (isAuthenticated && roleReady && staffHome && hash !== staffHome && !hash.startsWith('#/track/')) window.location.hash = staffHome;
   }, [isAuthenticated, roleReady, staffHome, hash]);
+
+  // Real backend + signed out (e.g. the session expired, or a leftover local login was discarded): back to the landing page.
+  useEffect(() => {
+    if (isBackendConfigured && authReady && !session && currentView === 'app') {
+      setCurrentView('landing');
+      try { sessionStorage.setItem('poshak_view', 'landing'); } catch { /* ignore */ }
+    }
+  }, [authReady, session, currentView]);
+
+  // Signing out anywhere (any app, another tab, or an expired session) always lands on the public website.
+  const hadSession = useRef(false);
+  useEffect(() => {
+    if (!authReady) return;
+    if (hadSession.current && !session) {
+      clearHash();
+      setCurrentView('landing');
+      try { sessionStorage.setItem('poshak_view', 'landing'); } catch { /* ignore */ }
+    }
+    hadSession.current = !!session;
+  }, [authReady, session]);
+
+  // There is one sign-in for everyone. Old team links (#/admin, #/rider, #/laundry, #/staff) opened while signed out go to
+  // that sign-in; opened by a customer they go to the customer app. After sign-in, team members are routed by their role.
+  const isTeamHash = /^#\/(admin|rider|captain|laundry|cleaner|staff)/.test(hash);
+  useEffect(() => {
+    if (!isBackendConfigured || !authReady || !isTeamHash) return;
+    if (!session) { clearHash(); handleViewChange('login'); }
+    else if (roleReady && !staffHome) { clearHash(); handleViewChange('app'); }
+  }, [isTeamHash, authReady, session, roleReady, staffHome]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Returning from the Google redirect (or a restored session) while still on the login screen.
   useEffect(() => {
@@ -107,32 +144,39 @@ export function AppContent() {
   if (isBackendConfigured && (!authReady || (session && !roleReady))) {
     return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', color: '#888', fontFamily: 'system-ui' }}><SlowLoading /></div>;
   }
-  if (staffHome && session) return staffHome === '#/admin' ? <AdminDashboard /> : staffHome === '#/laundry' ? <CleanerApp /> : <CaptainApp />;
-  if (hash.startsWith('#/staff')) return <StaffPortal />;
-  if (hash.startsWith('#/admin')) return <AdminDashboard />;
-  if (hash.startsWith('#/rider') || hash.startsWith('#/captain')) return <CaptainApp />;
-  if (hash.startsWith('#/laundry') || hash.startsWith('#/cleaner')) return <CleanerApp />;
+  if (hash.startsWith('#/track/')) return <Boot><PublicTrack token={decodeURIComponent(hash.slice(8).split('?')[0])} /></Boot>;
+  if (staffHome && session) return <Boot>{staffHome === '#/admin' ? <AdminDashboard /> : staffHome === '#/laundry' ? <CleanerApp /> : <CaptainApp />}</Boot>;
+  // (While a team link is being redirected, show the loader rather than flashing a separate sign-in page.)
+  if (isBackendConfigured && isTeamHash && (!session || !staffHome)) return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', color: '#888', fontFamily: 'system-ui' }}><SlowLoading /></div>;
+  if (hash.startsWith('#/staff')) return <Boot><StaffPortal /></Boot>;
+  if (hash.startsWith('#/admin')) return <Boot><AdminDashboard /></Boot>;
+  if (hash.startsWith('#/rider') || hash.startsWith('#/captain')) return <Boot><CaptainApp /></Boot>;
+  if (hash.startsWith('#/laundry') || hash.startsWith('#/cleaner')) return <Boot><CleanerApp /></Boot>;
 
   if (currentView === 'login') {
     return (
-      <LoginPage 
-        bookingService={bookingService}
-        onBackToHome={() => handleViewChange('landing')}
-        onLoginSuccess={handleLoginSuccess}
-      />
+      <Boot>
+        <LoginPage 
+          bookingService={bookingService}
+          onBackToHome={() => handleViewChange('landing')}
+          onLoginSuccess={handleLoginSuccess}
+        />
+      </Boot>
     );
   }
 
   if (currentView === 'app') {
     return (
-      <MainApp 
-        user={user}
-        logout={() => {
-          logout();
-          handleViewChange('landing');
-        }}
-        onBackToLanding={() => handleViewChange('landing')}
-      />
+      <Boot>
+        <MainApp 
+          user={user}
+          logout={() => {
+            logout();
+            handleViewChange('landing');
+          }}
+          onBackToLanding={() => handleViewChange('landing')}
+        />
+      </Boot>
     );
   }
 
@@ -188,9 +232,6 @@ export function AppContent() {
         onClose={() => setSelectedService(null)}
         onBookService={(svc) => handleOpenBooking(svc)}
       />
-
-      {/* Live Order Tracker Modal */}
-      <LiveOrderTrackerModal />
     </div>
   );
 }

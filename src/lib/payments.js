@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { supabase } from './supabase';
 
 const CHECKOUT_SRC = 'https://checkout.razorpay.com/v1/checkout.js';
@@ -58,3 +59,20 @@ export const tipCaptain = async (dbOrderId, amount) => checkout(await call('crea
 
 // Captain: single-use UPI QR for exactly what the customer owes.
 export const getDeliveryQr = (dbOrderId) => call('delivery-qr', { order_id: dbOrderId });
+
+// Is online payment actually switched on? True only once the Razorpay edge functions are deployed, so customers are
+// never offered "Pay online" when it would fail. Checked once per page load.
+let probe = null;
+export const checkPaymentsLive = () => {
+  if (!supabase) return Promise.resolve(false);
+  if (!probe) {
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-payment`;
+    probe = fetch(url, { method: 'OPTIONS' }).then((r) => r.status !== 404).catch(() => false);
+  }
+  return probe;
+};
+export const usePaymentsLive = () => {
+  const [live, setLive] = useState(false);
+  useEffect(() => { let on = true; checkPaymentsLive().then((v) => on && setLive(v)); return () => { on = false; }; }, []);
+  return live;
+};

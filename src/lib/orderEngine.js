@@ -1,4 +1,5 @@
 import { haversineKm } from './geo';
+import { tr } from '../i18n';
 
 // Time-driven order lifecycle for DEMO MODE (no backend). Progress is derived from
 // `order.startedAt` so it survives reloads. Real orders (Supabase) follow the DB status instead.
@@ -24,14 +25,16 @@ const remoteProgress = (order) => {
   const step = order.currentStep ?? 0;
   const leg = step === 0 ? 'pickup' : step === 2 ? 'delivery' : null;
   let secondsLeft = 0;
-  if (order.captainLocation && order.customerLocation && leg) {
+  if (order.eta?.minutes != null && leg) {
+    secondsLeft = order.eta.minutes * 60;                       // road-routed ETA from the rider's phone (or the server estimate)
+  } else if (order.captainLocation && order.customerLocation && leg) {
     secondsLeft = Math.round((haversineKm(order.captainLocation, order.customerLocation) / 22) * 3600);
   }
   return { remote: true, step, leg, legProgress: 0, secondsLeft, totalLeft: 0, done: order.status === 'completed' };
 };
 
 export const getProgress = (order, now = Date.now()) => {
-  if (order.remote) return remoteProgress(order);
+  if (order.remote || order.pendingSave) return remoteProgress(order);
   if (!order.startedAt) {
     return { step: order.currentStep ?? 0, legProgress: 0, leg: null, secondsLeft: 0, totalLeft: 0, done: order.status === 'completed' };
   }
@@ -80,25 +83,25 @@ export const formatCountdown = (sec) => {
 };
 
 export const statusCopy = (order, p) => {
-  const name = order.rider?.name?.split(' ')[0] || 'Your captain';
-  if (p.remote) {
-    const eta = p.secondsLeft > 0 ? `Arriving in about ${Math.max(1, Math.round(p.secondsLeft / 60))} min` : '';
+  const name = order.rider?.name?.split(' ')[0] || tr('captain');
+  if (p.remote || order.pendingSave) {
+    const eta = '';   // no live ETA shown: the rider calls the customer to coordinate
     switch (order.dbStatus) {
-      case 'placed': return { title: 'Order received — finding a captain', sub: 'You will be notified as soon as one is assigned' };
-      case 'captain_assigned': return { title: `${name} is on the way to pick up`, sub: eta || 'Heading to you' };
-      case 'picked_up': return { title: 'Clothes picked up', sub: 'On their way to be cleaned' };
-      case 'cleaning': return { title: 'Your clothes are being cleaned', sub: 'We will bring them back fresh' };
-      case 'ready': return { title: 'Cleaned and ready', sub: 'Your captain will head out for delivery soon' };
-      case 'out_for_delivery': return { title: `${name} is bringing your clothes`, sub: eta || 'On the way back' };
-      case 'delivered': return { title: 'Delivered', sub: 'Enjoy your fresh clothes' };
-      default: return { title: 'Order cancelled', sub: '' };
+      case 'placed': return { title: tr('status.placed.title'), sub: tr('status.placed.sub') };
+      case 'captain_assigned': return { title: tr('status.assigned.title', { name }), sub: eta || tr('status.assigned.sub') };
+      case 'picked_up': return { title: tr('status.pickedup.title'), sub: tr('status.pickedup.sub') };
+      case 'cleaning': return { title: tr('status.cleaning.title'), sub: tr('status.cleaning.sub') };
+      case 'ready': return { title: tr('status.ready.title'), sub: tr('status.ready.sub') };
+      case 'out_for_delivery': return { title: tr('status.out.title', { name }), sub: eta || tr('status.out.sub') };
+      case 'delivered': return { title: tr('status.delivered.title'), sub: tr('status.delivered.sub') };
+      default: return { title: tr('status.cancelled.title'), sub: '' };
     }
   }
   switch (p.step) {
-    case 0: return { title: `${name} is on the way to pick up`, sub: `Arriving in ${formatCountdown(p.secondsLeft)}` };
-    case 1: return { title: 'Clothes picked up — being cleaned', sub: `Ready for delivery in ${formatCountdown(p.secondsLeft)}` };
-    case 2: return { title: `${name} is bringing your clothes`, sub: `Arriving in ${formatCountdown(p.secondsLeft)}` };
-    default: return { title: 'Delivered', sub: 'Enjoy your fresh clothes' };
+    case 0: return { title: tr('status.assigned.title', { name }), sub: `Arriving in ${formatCountdown(p.secondsLeft)}` };
+    case 1: return { title: tr('status.pickedup.title'), sub: `Ready for delivery in ${formatCountdown(p.secondsLeft)}` };
+    case 2: return { title: tr('status.out.title', { name }), sub: `Arriving in ${formatCountdown(p.secondsLeft)}` };
+    default: return { title: tr('status.delivered.title'), sub: tr('status.delivered.sub') };
   }
 };
 

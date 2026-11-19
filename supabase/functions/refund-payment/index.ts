@@ -1,9 +1,10 @@
 // Admin → refund part or all of an order to the customer's ORIGINAL payment method via Razorpay.
 // Razorpay refunds are per-payment, so an amount larger than one payment is split across payments (newest first).
-import { handle, json, requireUser, serviceClient, rzp, HttpError } from '../_shared/razorpay.ts';
+import { handle, json, requireUser, serviceClient, rzp, HttpError, rateLimit } from '../_shared/razorpay.ts';
 
 Deno.serve(handle(async (req) => {
   const { db, user } = await requireUser(req);
+  rateLimit(`refund:${user.id}`, 10);
   const { data: me } = await db.from('profiles').select('role').eq('id', user.id).maybeSingle();
   if (me?.role !== 'admin') throw new HttpError(403, 'Admins only');
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useT } from '../../i18n';
 import { 
   Sparkles, 
   Package, 
@@ -13,6 +14,7 @@ export const MobileBottomNav = ({
   activeOrdersCount, 
   onOpenCart 
 }) => {
+  const { t } = useT();
   return (
     <nav className="mobile-bottom-nav-dock" aria-label="Mobile Navigation">
       {/* 1. Services / Home Tab */}
@@ -22,7 +24,7 @@ export const MobileBottomNav = ({
         aria-label="Laundry Services"
       >
         <Sparkles size={20} strokeWidth={activeTab === 'laundry' ? 2.5 : 2} />
-        <span className="mobile-nav-btn-label">Services</span>
+        <span className="mobile-nav-btn-label">{t('nav.services')}</span>
       </button>
 
       {/* 2. Live Orders Tab */}
@@ -35,7 +37,7 @@ export const MobileBottomNav = ({
           <Package size={20} strokeWidth={activeTab === 'orders' ? 2.5 : 2} />
           {activeOrdersCount > 0 && <span className="nav-badge-dot"></span>}
         </div>
-        <span className="mobile-nav-btn-label">Orders</span>
+        <span className="mobile-nav-btn-label">{t('nav.orders')}</span>
       </button>
 
       {/* 3. Cart Drawer Trigger */}
@@ -52,7 +54,7 @@ export const MobileBottomNav = ({
             </span>
           )}
         </div>
-        <span className="mobile-nav-btn-label">Cart</span>
+        <span className="mobile-nav-btn-label">{t('nav.cart')}</span>
       </button>
 
       {/* 4. Account Tab */}
@@ -62,7 +64,7 @@ export const MobileBottomNav = ({
         aria-label="My Account"
       >
         <User size={20} strokeWidth={activeTab === 'account' ? 2.5 : 2} />
-        <span className="mobile-nav-btn-label">Account</span>
+        <span className="mobile-nav-btn-label">{t('nav.account')}</span>
       </button>
     </nav>
   );

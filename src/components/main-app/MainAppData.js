@@ -184,90 +184,45 @@ export const INITIAL_TRANSACTIONS = [
   }
 ];
 
+// The launch catalogue. Prices come from the database (admin-editable); these supply images/copy and act as the offline/demo catalogue.
+// `onRequest` services have no fixed price: the customer asks for a quote and the admin replies with one.
 export const QUICK_SERVICES = [
   {
     id: 'wash-fold',
-    name: 'Wash, Dry & Fold',
+    name: 'Wash & Fold',
     category: 'Daily Wear',
-    price: '₹49/kg',
-    unitPrice: 49,
+    price: '₹59/kg',
+    unitPrice: 59,
     unit: 'kg',
     turnaround: '24 Hours',
-    rating: '4.8 ★ (2.1k+)',
-    image: 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?auto=format&fit=crop&w=400&q=80',
-    desc: 'Separated whites & colors, RO water soft wash, allergen-free & crisply folded.'
+    rating: '',
+    image: '/images/services/wash-fold.jpg',
+    desc: 'Everyday clothes, towels and bedsheets. Washed, dried and folded.'
   },
   {
     id: 'wash-iron',
-    name: 'Wash & Steam Iron',
+    name: 'Wash, Fold & Iron',
     category: 'Workwear',
-    price: '₹69/kg',
-    unitPrice: 69,
+    price: '₹89/kg',
+    unitPrice: 89,
     unit: 'kg',
     turnaround: '24 Hours',
-    rating: '4.9 ★ (4.5k+)',
-    image: 'https://images.unsplash.com/photo-1582735689369-4fe89db7114c?auto=format&fit=crop&w=400&q=80',
-    desc: 'Deep clean wash followed by Italian boiler steam vacuum press on hangers.'
+    rating: '',
+    image: '/images/services/wash-iron.jpg',
+    desc: 'Washed, dried and steam pressed. Shirts, trousers and office wear.'
   },
   {
-    id: 'express-6h',
-    name: 'Express 6-Hr Blitz Wash',
-    category: 'Blitz Express',
-    price: '₹99/kg',
-    unitPrice: 99,
-    unit: 'kg',
-    turnaround: '6 Hours Blitz',
-    rating: '4.9 ★ (1.8k+)',
-    image: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?auto=format&fit=crop&w=400&q=80',
-    desc: 'Priority queue slot. 20-min doorstep pickup, sanitized wash & delivered before dinner.'
-  },
-  {
-    id: 'dry-clean',
-    name: 'Premium Suit & Silk Dry Clean',
-    category: 'Delicates',
-    price: '₹199/pc',
-    unitPrice: 199,
+    id: 'alteration-dry-clean',
+    name: 'Alteration & Dry Cleaning',
+    category: 'Specialist care',
+    price: 'Price on request',
+    unitPrice: 0,
     unit: 'pc',
-    turnaround: '48 Hours',
-    rating: '4.95 ★ (890+)',
-    image: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=400&q=80',
-    desc: 'Hydrocarbon zero-bleed eco solvents for pure zari, silks, suits, and cashmere.'
-  },
-  {
-    id: 'steam-press',
-    name: 'Steam Press Only',
-    category: 'Wrinkle-Free',
-    price: '₹19/pc',
-    unitPrice: 19,
-    unit: 'pc',
-    turnaround: 'Same Day',
-    rating: '4.7 ★ (3.2k+)',
-    image: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?auto=format&fit=crop&w=400&q=80',
-    desc: 'Italian boiler suction steam table pressing. Zero shine and razor-sharp crease.'
-  },
-  {
-    id: 'shoe-spa',
-    name: 'Sneaker & Shoe Spa',
-    category: 'Footwear',
-    price: '₹249/pair',
-    unitPrice: 249,
-    unit: 'pair',
-    turnaround: '48 Hours',
-    rating: '4.9 ★ (1.4k+)',
-    image: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=400&q=80',
-    desc: 'Ultrasonic scrub, suede brushing, insole sterilization & sole un-yellowing.'
-  },
-  {
-    id: 'heavy-home',
-    name: 'Duvets, Blankets & Quilts',
-    category: 'Home & Bedding',
-    price: '₹199/pc',
-    unitPrice: 199,
-    unit: 'pc',
-    turnaround: '48 Hours',
-    rating: '4.8 ★ (950+)',
-    image: 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?auto=format&fit=crop&w=400&q=80',
-    desc: 'Deep sterilization wash targeting dust mites and pet dander with high-fluff drying.'
+    onRequest: true,
+    turnaround: 'Quoted per item',
+    rating: '',
+    image: '/images/services/alteration-dry-clean.jpg',
+    desc: 'Suits, sarees, lehengas, hems and fittings. Tell us what you need and we send a price.'
   }
 ];
 

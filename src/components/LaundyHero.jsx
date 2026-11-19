@@ -1,15 +1,17 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Play, ShieldCheck, Zap, Star } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Zap, Star } from 'lucide-react';
+import { useCatalog } from '../context/CatalogContext';
 
 export const LaundyHero = ({ onScrollToServices, onOpenBooking }) => {
+  const { services } = useCatalog();
   return (
     <section id="home" className="laundy-hero-section">
       {/* Main Full-Bleed Background Image */}
       <div className="laundy-hero-bg-wrapper">
         <motion.img 
-          src="https://images.unsplash.com/photo-1556740758-90de374c12ad?auto=format&fit=crop&w=1920&q=85" 
-          alt="Poshak Master Garment Specialist" 
+          src="/images/hero-laundromat.jpg" 
+          alt="Rows of washing machines in a laundromat" 
           className="laundy-hero-bg-img"
           initial={{ scale: 1.05, opacity: 0 }}
           animate={{ scale: 1.0, opacity: 1 }}
@@ -27,25 +29,10 @@ export const LaundyHero = ({ onScrollToServices, onOpenBooking }) => {
           animate={{ opacity: 1, x: 0, y: 0 }}
           transition={{ type: "spring", stiffness: 180, damping: 22, delay: 0.2 }}
         >
-          <div className="laundy-hero-avatars-capsule">
-            <img 
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" 
-              alt="Client 1" 
-              className="hero-avatar-circle"
-            />
-            <img 
-              src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80" 
-              alt="Client 2" 
-              className="hero-avatar-circle"
-            />
-            <img 
-              src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80" 
-              alt="Client 3" 
-              className="hero-avatar-circle"
-            />
-          </div>
+          {/* Real prices from the live catalogue (no made-up testimonials). */}
+          <div className="laundy-hero-left-title">Doorstep laundry, by the kilo</div>
           <p className="laundy-hero-left-quote">
-            Poshak Care made managing our daily pickups effortless. From scheduling to delivery, everything runs on time. It's the most reliable system we've used for our fabrics.
+            {services.length ? services.map((x) => `${x.name} ${x.price}`).join(' · ') : 'Wash & Fold · Wash, Fold & Iron'}. Weighed at your door, pickup and delivery included, pay after delivery.
           </p>
         </motion.div>
 
@@ -65,9 +52,6 @@ export const LaundyHero = ({ onScrollToServices, onOpenBooking }) => {
               alt="Services Preview" 
               className="hero-video-img"
             />
-            <div className="hero-play-button">
-              <Play size={14} fill="#fa5929" color="#fa5929" />
-            </div>
           </div>
           <div className="hero-video-cta-row">
             <span>Check out our services</span>
