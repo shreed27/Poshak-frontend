@@ -212,7 +212,7 @@ export const LocationPickerModal = ({
     !streetArea.trim() && 'add the street / area',
     !phoneOk && 'enter your 10-digit mobile number'
   ].filter(Boolean);
-  const phoneMsg = phone && !phoneOk ? (phone.length < 10 ? `${10 - phone.length} more digit${10 - phone.length === 1 ? '' : 's'} needed` : 'Indian mobile numbers start with 6, 7, 8 or 9') : (touched.phone && !phone ? 'Your captain needs a number to reach you' : '');
+  const phoneMsg = phone && !phoneOk ? (phone.length < 10 ? `${10 - phone.length} more digit${10 - phone.length === 1 ? '' : 's'} needed` : 'Indian mobile numbers start with 6, 7, 8 or 9') : (touched.phone && !phone ? 'Your rider needs a number to call you' : '');
   const first = addresses.length === 0;
 
   return (

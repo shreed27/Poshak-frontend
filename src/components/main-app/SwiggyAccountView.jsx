@@ -7,6 +7,7 @@ import { ReferralAndPlans } from './ReferralAndPlans';
 import { LegalModal } from '../LegalModals';
 import { supabase } from '../../lib/supabase';
 import { useCatalog } from '../../context/CatalogContext';
+import { askConfirm, showMessage } from '../../lib/confirm';
 
 export const SwiggyAccountView = ({ 
   user, 
@@ -75,19 +76,19 @@ export const SwiggyAccountView = ({
       downloadAnchor.remove();
     } catch (err) {
       console.error("Failed to export data:", err);
-      alert("Could not complete export. Please try again or contact privacy@poshak.in.");
+      showMessage("Could not download your data", "Please try again, or email privacy@poshak.in.");
     }
   };
 
-  const handleErasureRequest = () => {
+  const handleErasureRequest = async () => {
     const live = Boolean(supabase && user?.isSupabase);
-    const confirmed = window.confirm(
-      "DPDP ACT 2023 (Section 12) - DATA ERASURE REQUEST:\n\n" +
-      (live
-        ? "We will send an erasure request for your Poshak account to our grievance officer, and clear the data stored on this device. Orders that are still open, and records we must keep by law (such as tax invoices), are handled as the law requires.\n\n"
-        : "This will erase your profile, addresses, order history and wallet records stored on this device.\n\n") +
-      "Continue?"
-    );
+    const confirmed = await askConfirm({
+      title: 'Delete your data?',
+      body: live
+        ? 'We will send an erasure request for your Poshak account to our grievance officer and clear this device. Open orders and records we must keep by law (such as tax invoices) are handled as the law requires.'
+        : 'This erases your profile, addresses, orders and wallet records on this device.',
+      ok: 'Delete my data', cancel: 'Keep', danger: true
+    });
     if (!confirmed) return;
     try {
       ['poshak_orders', 'poshak_cart', 'poshak_addresses', 'poshak_wallet', 'poshak_user'].forEach((k) => localStorage.removeItem(k));
@@ -95,9 +96,9 @@ export const SwiggyAccountView = ({
         const to = support?.grievance_email || support?.email || 'grievance@poshak.in';
         const body = `Please erase the personal data held for my Poshak account.\n\nAccount email: ${user?.email || ''}\nName: ${user?.name || ''}\nRequested on: ${new Date().toLocaleString('en-IN')}`;
         window.location.href = `mailto:${to}?subject=${encodeURIComponent('Data erasure request (DPDP Act 2023)')}&body=${encodeURIComponent(body)}`;
-        alert('Your email app will open with the erasure request — please send it. Data on this device has been cleared and you will now be signed out.');
+        await showMessage('Send the email to finish', 'Your email app opens with the request. Please send it. This device has been cleared and you will be signed out.');
       } else {
-        alert('Your data has been erased from this device. You will now be signed out.');
+        await showMessage('Data erased', 'Your data has been erased from this device. You will be signed out.');
       }
       logout();
     } catch (err) {

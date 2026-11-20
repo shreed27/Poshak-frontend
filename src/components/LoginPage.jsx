@@ -124,7 +124,7 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
   const friendly = (msg = '') => (/provider|not enabled|unsupported/i.test(msg) ? 'This sign-in method isn’t switched on yet. Please use Google for now.'
     : /rate limit|too many|seconds/i.test(msg) ? 'Too many tries. Please wait a minute and try again.'
     : /invalid|expired|token/i.test(msg) ? 'That code is wrong or has expired. Check it and try again, or resend a new one.' : msg);
-  const needConsent = () => { if (!dpdpConsent) { alert('Please check the box to agree to the Terms of Service and DPDP Act 2023 Privacy Notice.'); return true; } return false; };
+  const needConsent = () => { if (!dpdpConsent) { setAuthError('Please tick the box below to agree to the Terms and Privacy Notice first.'); return true; } return false; };
 
   const sendPhoneCode = async () => {
     setLoading(true); setAuthError(null);
@@ -586,7 +586,7 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
                       className="google-action-btn hover-lift"
                       onClick={() => {
                         if (!dpdpConsent) {
-                          alert('Please check the box to agree to the Terms of Service and DPDP Act 2023 Privacy Notice.');
+                          setAuthError('Please tick the box below to agree to the Terms and Privacy Notice first.');
                           return;
                         }
                         if (supabase) { loginWithGoogleOAuth(); return; }
@@ -618,7 +618,7 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
                           className="fast-chip-btn"
                           onClick={() => {
                             if (!dpdpConsent) {
-                              alert('Please check the box to agree to the Terms of Service and DPDP Act 2023 Privacy Notice.');
+                              setAuthError('Please tick the box below to agree to the Terms and Privacy Notice first.');
                               return;
                             }
                             handleQuickDemoLogin('Ananya Rao (Indiranagar)', 'ananya@poshak.in');
@@ -632,7 +632,7 @@ export const LoginPage = ({ bookingService, onBackToHome, onLoginSuccess }) => {
                           className="fast-chip-btn"
                           onClick={() => {
                             if (!dpdpConsent) {
-                              alert('Please check the box to agree to the Terms of Service and DPDP Act 2023 Privacy Notice.');
+                              setAuthError('Please tick the box below to agree to the Terms and Privacy Notice first.');
                               return;
                             }
                             handleQuickDemoLogin('Rohan Sharma (HSR)', 'rohan@poshak.in');

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { CartProvider } from './context/CartContext';
 import { CatalogProvider } from './context/CatalogContext';
 import { LaundyNavbar } from './components/LaundyNavbar';
 import { LaundyHero } from './components/LaundyHero';
@@ -240,9 +239,7 @@ export default function App() {
   return (
     <AuthProvider>
       <CatalogProvider>
-        <CartProvider>
-          <AppContent />
-        </CartProvider>
+        <AppContent />
       </CatalogProvider>
     </AuthProvider>
   );

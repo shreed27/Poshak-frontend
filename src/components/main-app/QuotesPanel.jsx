@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { FileQuestion, Clock, CheckCircle2, XCircle, Plus } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { askConfirm } from '../../lib/confirm';
 
 const DAY = 86400000;
 const inr = (n) => `₹${Number(n).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
@@ -33,7 +34,7 @@ export const QuotesPanel = ({ userId, onRequest, onAccepted }) => {
   }, [userId, load]);
 
   const respond = async (q, accept) => {
-    if (!accept && !window.confirm('Decline this quote?')) return;
+    if (!accept && !(await askConfirm({ title: 'Decline this quote?', ok: 'Decline', cancel: 'Back', danger: true }))) return;
     setBusy(q.id); setError('');
     const { error: e } = await supabase.rpc('respond_quote', { p_id: q.id, p_accept: accept });
     setBusy('');
@@ -42,7 +43,7 @@ export const QuotesPanel = ({ userId, onRequest, onAccepted }) => {
     if (accept) onAccepted?.();
   };
   const cancel = async (q) => {
-    if (!window.confirm('Cancel this quote request?')) return;
+    if (!(await askConfirm({ title: 'Cancel this quote request?', ok: 'Cancel request', cancel: 'Back', danger: true }))) return;
     const { error: e } = await supabase.rpc('cancel_my_quote', { p_id: q.id });
     if (e) setError(e.message); else load();
   };

@@ -12,6 +12,7 @@ import { NotificationBell } from '../NotificationBell';
 import { BarChart, AreaChart } from './charts';
 import { PartnerProfile, StatusBanner, docWarnings, useMyProfile } from './PartnerProfile';
 import { InstallPrompt } from '../InstallPrompt';
+import { alertStaff, askNotifyPermission } from '../../lib/attention';
 import './ops2.css';
 
 const beep = () => {
@@ -105,6 +106,7 @@ const Cleaner = () => {
   const [flash, setFlash] = useState('');
   const [q, setQ] = useState('');
   const seen = useRef(null);
+  useEffect(() => { askNotifyPermission(); }, []);
 
   const loadQueue = useCallback(async () => {
     const { data, error: err } = await supabase.rpc('cleaner_queue');
@@ -114,7 +116,7 @@ const Cleaner = () => {
     const incoming = new Set(list.filter((j) => j.status === 'picked_up').map((j) => j.id));
     if (seen.current) {
       const fresh = [...incoming].filter((id) => !seen.current.has(id));
-      if (fresh.length) { beep(); setFlash(`${fresh.length} new order${fresh.length > 1 ? 's' : ''} to receive`); setTimeout(() => setFlash(''), 6000); }
+      if (fresh.length) { alertStaff('Poshak: new order to receive', `${fresh.length} bag${fresh.length > 1 ? 's' : ''} on the way to you`); setFlash(`${fresh.length} new order${fresh.length > 1 ? 's' : ''} to receive`); setTimeout(() => setFlash(''), 6000); }
     }
     seen.current = incoming;
     setJobs(list);

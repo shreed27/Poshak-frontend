@@ -3,7 +3,7 @@ export default {
   'lang.label': 'ಭಾಷೆ',
   'nav.services': 'ಸೇವೆಗಳು', 'nav.orders': 'ಆರ್ಡರ್‌ಗಳು', 'nav.cart': 'ಕಾರ್ಟ್', 'nav.account': 'ಖಾತೆ',
   'orders.title': 'ನಿಮ್ಮ ಆರ್ಡರ್‌ಗಳು', 'track.live': 'ಆರ್ಡರ್ ನೋಡಿ',
-  'captain': 'ನಿಮ್ಮ ಕ್ಯಾಪ್ಟನ್',
+  'captain': 'ನಿಮ್ಮ ರೈಡರ್',
   'status.placed.title': 'ಆರ್ಡರ್ ಆಗಿದೆ', 'status.placed.sub': 'ನಿಮ್ಮ ಪಿಕಪ್ ಸಮಯಕ್ಕೆ ರೈಡರ್ ಅನ್ನು ನಿಯೋಜಿಸಲಾಗುತ್ತಿದೆ.',
   'status.assigned.title': '{name} ನಿಮ್ಮ ಬಟ್ಟೆ ತೆಗೆದುಕೊಳ್ಳಲು ಬರುತ್ತಾರೆ', 'status.assigned.sub': 'ಬರುವ ಮೊದಲು ಅವರು ನಿಮಗೆ ಕರೆ ಮಾಡುತ್ತಾರೆ.',
   'status.pickedup.title': 'ಬಟ್ಟೆ ತೆಗೆದುಕೊಳ್ಳಲಾಗಿದೆ', 'status.pickedup.sub': 'ತೊಳೆಯಲು ಕೊಂಡೊಯ್ಯಲಾಗುತ್ತಿದೆ',

@@ -3,7 +3,7 @@ export default {
   'lang.label': 'भाषा',
   'nav.services': 'सेवाएँ', 'nav.orders': 'ऑर्डर', 'nav.cart': 'कार्ट', 'nav.account': 'खाता',
   'orders.title': 'आपके ऑर्डर', 'track.live': 'ऑर्डर देखें',
-  'captain': 'आपके कैप्टन',
+  'captain': 'आपके राइडर',
   'status.placed.title': 'ऑर्डर हो गया', 'status.placed.sub': 'आपके पिकअप स्लॉट के लिए राइडर तय किया जा रहा है।',
   'status.assigned.title': '{name} आपके कपड़े लेने आएँगे', 'status.assigned.sub': 'आने से पहले वे आपको कॉल करेंगे।',
   'status.pickedup.title': 'कपड़े ले लिए गए', 'status.pickedup.sub': 'धुलाई के लिए जा रहे हैं',

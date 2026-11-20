@@ -19,6 +19,7 @@ import './ops2.css';
 import { NotificationBell } from '../NotificationBell';
 import { PhotoCapture, GarmentChecklist, checklistFrom, totalPieces } from './PhotoCapture';
 import { canStartDelivery } from '../../lib/orderStatus';
+import { alertStaff, askNotifyPermission } from '../../lib/attention';
 
 const SELECT = '*, order_events(status, created_at)';
 const PUSH_ACTIVE_MS = 5000;     // while heading to a customer: customers are watching
@@ -225,6 +226,8 @@ const Captain = () => {
   const ordersRef = useRef([]);
   const tuneRef = useRef({});
   const wakeRef = useRef(null);
+  const seenOffers = useRef(null);
+  useEffect(() => { askNotifyPermission(); }, []);
 
   const load = useCallback(async () => {
     const [{ data, error: err }, { data: pay }, { data: sm }] = await Promise.all([
@@ -234,7 +237,15 @@ const Captain = () => {
     ]);
     setSum(sm || null);
     if (err) { setError(err.message); return; }
-    setOrders(data.map((r) => fromRow(r)));   // captains get no OTPs: they never exist client-side
+    const list = data.map((r) => fromRow(r));   // captains get no OTPs: they never exist client-side
+    // A new job offer: make sure the rider notices before it expires.
+    const offers = list.filter((o) => o.dbStatus === 'captain_assigned' && o.assignment === 'offered').map((o) => o.dbId);
+    if (seenOffers.current && offers.some((id) => !seenOffers.current.has(id))) {
+      const o = list.find((x) => offers.includes(x.dbId) && !seenOffers.current.has(x.dbId));
+      alertStaff('New pickup job', `${o.orderId} · ${o.pickupSlot || ''} · ${o.pickupAddress || ''}`.slice(0, 140));
+    }
+    seenOffers.current = new Set(offers);
+    setOrders(list);
     setCash((pay || []).reduce((a, p) => a + Number(p.amount), 0));
   }, [uid]);
 

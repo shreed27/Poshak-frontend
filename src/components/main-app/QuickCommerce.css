@@ -331,3 +331,4 @@
 .qc-dialog-actions button { flex: 1; height: 46px; border-radius: 12px; font: inherit; font-weight: 800; font-size: 0.9rem; cursor: pointer; border: 1px solid rgba(20, 22, 28, 0.14); background: #fff; color: #17181c; }
 .qc-dialog-actions button.primary { background: #ef5a24; border-color: #ef5a24; color: #fff; }
 .qc-sheet { position: relative; }
+.qc-dialog-actions button.primary.danger { background: #c62828; border-color: #c62828; }

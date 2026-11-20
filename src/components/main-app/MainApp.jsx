@@ -27,6 +27,7 @@ import './SwiggyApp.css';
 import './QuickCommerce.css';
 
 import { useCatalog } from '../../context/CatalogContext';
+import { askConfirm } from '../../lib/confirm';
 
 // Demo data from earlier builds (fake Bengaluru addresses / orders) must not
 // leak into a real, location-aware session.
@@ -181,6 +182,7 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
     const files = order.photoFiles || [];
     delete order.photoFiles;
     setOrders(prev => [backendOn ? { ...order, rider: null, route: null, dbStatus: 'placed', status: 'active', currentStep: 0, pendingSave: true } : order, ...prev]);
+    const savedBasket = basket;              // restored if the order cannot be saved
     setBasket({});
     setActiveTab('orders');
     setToast({ text: STEP_TOASTS[0], key: Date.now() });
@@ -199,7 +201,10 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
         .catch((err) => {
           console.error('Order save failed:', err);
           setOrders(prev => prev.filter(o => o.orderId !== order.orderId));
-          setToast({ text: 'Could not place your order. Please try again.', key: Date.now() });
+          setBasket(savedBasket);
+          setActiveTab('laundry');
+          const why = String(err?.message || '').slice(0, 140);
+          setToast({ text: why ? `Could not place your order: ${why}` : 'Could not place your order. Please try again.', key: Date.now() });
         });
     } else {
       getRoute(start, activeAddress).then(route => {
@@ -227,7 +232,7 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
   };
 
   const handleCancelOrder = async (orderId) => {
-    if (!window.confirm('Cancel this order? Your captain has not picked up the bag yet, so this is free.')) return;
+    if (!(await askConfirm({ title: 'Cancel this order?', body: 'Your clothes have not been picked up yet, so cancelling is free.', ok: 'Cancel order', cancel: 'Keep order', danger: true }))) return;
     const target = orders.find(o => o.orderId === orderId);
     if (target?.remote) {
       try {
@@ -410,7 +415,7 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
             >
               {backendOn && user?.isSupabase && (
                 <div className="swiggy-feed-container" style={{ paddingBottom: 0 }}>
-                  <QuotesPanel userId={user.id} onRequest={openQuote} onAccepted={() => setToast({ text: 'Quote accepted — your pickup is booked', key: Date.now() })} />
+                  <QuotesPanel userId={user.id} onRequest={openQuote} onAccepted={() => setToast({ text: 'Quote accepted. A rider will call to fix the pickup time, or choose one below.', key: Date.now() })} />
                 </div>
               )}
               <SwiggyOrdersView 
