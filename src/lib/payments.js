@@ -26,7 +26,7 @@ const call = async (name, body) => {
 
 // Opens Razorpay Checkout for a session from one of the create-* functions.
 // Resolves once the server has confirmed the payment; rejects if the customer closes the window.
-const checkout = async (session) => {
+const checkout = async (session, opts = {}) => {
   await loadCheckout();
   return new Promise((resolve, reject) => {
     const rz = new window.Razorpay({
@@ -36,12 +36,14 @@ const checkout = async (session) => {
       currency: 'INR',
       name: 'Poshak',
       description: session.order_code,
-      prefill: { name: session.name, email: session.email },
+      // Open straight on the method the customer picked in our checkout (upi | card | netbanking | wallet).
+      prefill: { name: session.name, email: session.email, ...(opts.contact ? { contact: opts.contact } : {}), ...(opts.method ? { method: opts.method } : {}) },
+      retry: { enabled: true },
       theme: { color: '#fa5929' },
       handler: async (res) => {
         try { resolve(await call('verify-payment', res)); } catch (e) { reject(e); }   // webhook also confirms; this makes the UI instant
       },
-      modal: { ondismiss: () => reject(new Error('Payment cancelled')) }
+      modal: { confirm_close: true, ondismiss: () => reject(new Error('Payment cancelled')) }
     });
     rz.on('payment.failed', (r) => reject(new Error(r.error?.description || 'Payment failed')));
     rz.open();
@@ -49,7 +51,7 @@ const checkout = async (session) => {
 };
 
 // Pay what is still due on an order.
-export const payOnline = async (dbOrderId) => checkout(await call('create-payment', { order_id: dbOrderId }));
+export const payOnline = async (dbOrderId, opts) => checkout(await call('create-payment', { order_id: dbOrderId }), opts);
 
 // Buy a prepaid wallet pack.
 export const buyPlan = async (planId) => checkout(await call('create-intent-payment', { kind: 'plan', plan_id: planId }));

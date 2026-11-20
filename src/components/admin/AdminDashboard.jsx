@@ -413,7 +413,7 @@ const Dashboard = () => {
                   <span className={`ops-badge b-${o.dbStatus}`}>{o.assignment === 'offered' && o.dbStatus === 'captain_assigned' ? 'Offered…' : STATUS_LABEL[o.dbStatus]}</span>
                 </div>
                 <div className="ops-order-name">{o.serviceName}</div>
-                <div className="ops-order-meta">₹{o.totalAmount} · {o.paymentStatus === 'paid' ? 'Paid' : o.paymentMode === 'online' ? 'Online · due' : 'COD'} · {o.pickupSlot}</div>
+                <div className="ops-order-meta">₹{o.totalAmount} · {o.paymentStatus === 'paid' ? 'Paid' : o.paidAmount > 0 ? 'Part paid' : 'COD'} · {o.pickupSlot}</div>
                 <div className="ops-order-meta">{ago(o.createdAtIso)}{o.rider ? ` · ${o.rider.name}` : ' · unassigned'}{o.eta ? <b className="ops-eta"> · ETA {fmtMin(o.eta.minutes)}</b> : ''}</div>
               </button>
             ))}
@@ -443,7 +443,7 @@ const Dashboard = () => {
                 {selected.finalAmount != null ? `Final ₹${selected.finalAmount} (estimate was ₹${selected.estimatedAmount})` : `Estimate ₹${selected.estimatedAmount} — not weighed yet`}
                 {' · '}Paid ₹{selected.paidAmount} · Due ₹{selected.dueAmount}
               </p>
-              <p className="ops-line">Slot: {selected.pickupSlot} · {selected.paymentMode === 'online' ? 'Prepaid (online)' : 'Pay on delivery'} · {selected.customerName}{selected.customerPhone ? ` · ${selected.customerPhone}` : ''}</p>
+              <p className="ops-line">Slot: {selected.pickupSlot} · {selected.paidAmount > 0 ? `Paid online ₹${selected.paidAmount}` : 'Pay on delivery'} · {selected.customerName}{selected.customerPhone ? ` · ${selected.customerPhone}` : ''}</p>
               {selected.refundDue > 0 && (
                 <p className="ops-line" style={{ color: '#b45309' }}>
                   Refund owed: <b>₹{selected.refundDue}</b> <button className="ops-btn" onClick={() => refund(selected)}>Record refund</button>

@@ -154,7 +154,7 @@ const DeliveryPanel = ({ o, run }) => {
     <div className="cap-panel">
       <div className={`cap-pay ${paid ? 'paid' : ''}`}>
         {paid ? <><CheckCircle2 size={18} /> <b>Payment received</b> <span>₹{o.paidAmount} paid</span></>
-          : <><Banknote size={18} /> <b>Collect ₹{o.dueAmount}</b> <span>{o.paymentMode === 'online' ? 'Balance after weighing' : 'Pay on delivery'}</span></>}
+          : <><Banknote size={18} /> <b>Collect ₹{o.dueAmount}</b> <span>{o.paidAmount > 0 ? 'Balance after weighing' : 'Pay on delivery'}</span></>}
       </div>
 
       {!paid && (
@@ -375,7 +375,7 @@ const Captain = () => {
 
           <p className="ops-line"><b>{o.customerName}</b></p>
           <p className="ops-line"><MapPin size={14} /> {o.pickupAddress}{o.landmark ? ` · Near ${o.landmark}` : ''}</p>
-          <p className="ops-line">Slot: {o.pickupSlot} · {o.paymentMode === 'online' ? 'Prepaid (online)' : 'Pay on delivery'}</p>
+          <p className="ops-line">Slot: {o.pickupSlot} · {o.paidAmount > 0 ? `Paid online ₹${o.paidAmount}` : 'Pay on delivery'}</p>
           {o.deliverySlot && <p className="ops-line"><b>Deliver:</b> {o.deliverySlot}</p>}
           {o.failedAttempts > 0 && <p className="ops-line" style={{ color: '#b45309' }}>{o.failedAttempts} failed attempt(s) so far</p>}
           {o.specialInstructions && <p className="ops-line">Note: {o.specialInstructions}</p>}

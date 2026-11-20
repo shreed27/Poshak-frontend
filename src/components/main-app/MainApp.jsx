@@ -194,7 +194,7 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
             Promise.all(files.map((f) => uploadOrderPhoto(saved.dbId, f, 'customer')))
               .catch((e) => setToast({ text: `Order placed, but a photo did not upload: ${e.message}`, key: Date.now() }));
           }
-          if (order.paymentMode === 'online') return handlePayNow(saved);
+          if (order.paymentMode === 'online') return handlePayNow(saved, { method: order.payMethod, contact: order.customerPhone });
         })
         .catch((err) => {
           console.error('Order save failed:', err);
@@ -209,13 +209,20 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
   };
 
   // Opens Razorpay for whatever is still due. Safe to call again later (e.g. after the final weigh-in bill).
-  const handlePayNow = async (order) => {
+  const [payIssue, setPayIssue] = useState(null);   // { order, opts, message } after a cancelled / failed online payment
+  const handlePayNow = async (order, opts = {}) => {
     try {
-      await payOnline(order.dbId);
+      await payOnline(order.dbId, opts);
+      setPayIssue(null);
       setToast({ text: `Payment received for #${order.orderId}`, key: Date.now() });
     } catch (err) {
-      // Closing the window is not an error; the order stays "pay later" and can be paid from the Orders tab.
-      if (err.message !== 'Payment cancelled') setToast({ text: err.message, key: Date.now() });
+      // The order is already booked; the customer can retry now, or simply pay the rider on delivery.
+      setPayIssue({
+        order, opts,
+        message: err.message === 'Payment cancelled'
+          ? 'You closed the payment window. Your pickup is still booked.'
+          : `${err.message}. Your pickup is still booked.`
+      });
     }
   };
 
@@ -466,6 +473,7 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
             onSetKg={setKg}
             activeAddress={address}
             onChangeAddress={() => setIsLocationPickerOpen(true)}
+            onClearBasket={() => setBasket({})}
             onConfirmOrder={handleConfirmOrder}
           />
         )}
@@ -491,6 +499,20 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
           />
         )}
       </AnimatePresence>
+
+      {payIssue && (
+        <div className="qc-dialog-back" onClick={() => setPayIssue(null)}>
+          <div className="qc-dialog" role="alertdialog" aria-label="Payment not completed" onClick={(e) => e.stopPropagation()}>
+            <div className="qc-dialog-ic"><X size={18} strokeWidth={3} /></div>
+            <h4>Payment not completed</h4>
+            <p>{payIssue.message} Try again, or pay the rider by cash or UPI when your clothes are delivered.</p>
+            <div className="qc-dialog-actions">
+              <button type="button" onClick={() => { setPayIssue(null); setToast({ text: 'OK, pay on delivery', key: Date.now() }); }}>Pay on delivery</button>
+              <button type="button" className="primary" onClick={() => { const p = payIssue; setPayIssue(null); handlePayNow(p.order, p.opts); }}>Retry payment</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {help && <HelpCenter orders={orders} startOrderId={help.orderId} onClose={() => setHelp(null)} />}
 
