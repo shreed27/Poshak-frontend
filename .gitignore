@@ -30,3 +30,7 @@ dist-ssr
 
 # Supabase CLI cache
 supabase/.temp/
+
+# Firebase
+.firebase/
+firebase-debug.log
