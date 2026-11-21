@@ -17,14 +17,14 @@ export const LaundyPricing = ({ onOpenBooking }) => {
       badgeClass: 'badge-light-orange',
       ...rate('wash-fold', 59),
       turnaround: '24 Hours',
-      description: 'Daily laundry weighed at your door, washed in soft water, dried and neatly folded.',
+      description: 'Daily laundry weighed at your door, washed, dried and neatly folded.',
       cardTheme: 'pricing-card-light',
       isPopular: false,
       cta: 'Schedule Pickup',
       features: [
         'Weighed and counted at your door',
         'Whites and colours washed separately',
-        'Gentle detergents, soft water',
+        'Gentle detergents',
         'Neatly folded and packed',
         'Free doorstep pickup & delivery'
       ]

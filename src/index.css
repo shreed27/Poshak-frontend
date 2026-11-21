@@ -4272,3 +4272,58 @@ input, select, textarea {
 .badge-light-orange { background: #fff1ec; color: #fa5929; }
 
 .laundy-hero-left-title { font-weight: 800; font-size: 1.05rem; color: #fff; margin-bottom: 0.4rem; letter-spacing: -0.01em; text-shadow: 0 2px 10px rgba(0,0,0,.45); }
+
+/* ==========================================================================
+   Hero headline + CTAs (all sizes)
+   ========================================================================== */
+.laundy-hero-h1 { font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif; font-size: clamp(2.2rem, 4.2vw, 3.4rem); font-weight: 800; line-height: 1.05; letter-spacing: -0.035em; color: #fff; margin: 0 0 0.9rem; text-shadow: 0 2px 18px rgba(0, 0, 0, 0.35); }
+.laundy-hero-ctas { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 1.25rem; }
+.laundy-hero-cta { display: inline-flex; align-items: center; gap: 0.4rem; height: 48px; padding: 0 1.3rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.55); background: rgba(255, 255, 255, 0.12); color: #fff; font: inherit; font-size: 0.95rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(6px); }
+.laundy-hero-cta.primary { background: #fa5929; border-color: #fa5929; }
+.laundy-hero-cta:hover { filter: brightness(1.05); }
+.laundy-hero-left-card { max-width: 520px; }
+
+/* ==========================================================================
+   PHONES: one column, no squeezed side-by-side headers, no clipped watermarks
+   ========================================================================== */
+@media (max-width: 768px) {
+  .laundy-container { padding: 0 1.25rem; }
+
+  /* Hero: full-bleed photo, headline + buttons at the bottom, nothing floating */
+  .laundy-hero-section, .laundy-hero-container { min-height: 86svh; }
+  .laundy-hero-container { padding: 6.5rem 1.25rem 2.25rem; justify-content: flex-end; }
+  .laundy-hero-left-card { margin-top: 0 !important; max-width: none; }
+  .laundy-hero-right-card, .laundy-giant-watermark-wrap { display: none !important; }
+  .laundy-hero-dark-overlay { background: linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.25) 35%, rgba(0, 0, 0, 0.88) 100%); }
+  .laundy-hero-h1 { font-size: 2.35rem; }
+  .laundy-hero-left-quote { font-size: 0.95rem; max-width: none; }
+  .laundy-hero-cta { flex: 1; justify-content: center; }
+
+  /* Sections: less vertical padding */
+  .laundy-about-section, .laundy-how-section, .laundy-services-section, .laundy-pricing-section, .laundy-faq-section { padding-top: 3.25rem !important; padding-bottom: 3.25rem !important; }
+
+  /* Header rows: stack the heading over its paragraph instead of squeezing them side by side */
+  .laundy-about-header-row, .laundy-how-header-row, .laundy-services-header-row, .laundy-pricing-header-row, .laundy-faq-header-row, .footer-cta-row {
+    display: flex !important; flex-direction: column !important; align-items: flex-start !important; gap: 0.75rem !important; margin-bottom: 1.75rem !important;
+  }
+  .laundy-about-subtitle-right, .laundy-faq-sub-dark, .laundy-how-subtitle, .laundy-services-desc-dark, .pricing-subtitle-text, .footer-cta-desc { max-width: none !important; flex: none !important; padding-top: 0 !important; font-size: 0.95rem !important; }
+  .laundy-about-heading, .laundy-faq-heading-dark, .laundy-pricing-title,
+  .laundy-how-section h2, .laundy-services-section h2, .footer-cta-title { font-size: 2.1rem !important; line-height: 1.1 !important; flex: none !important; }
+  .pricing-header-badge-pill { border-radius: 999px !important; width: auto !important; height: auto !important; padding: 0.45rem 0.9rem !important; text-align: left !important; }
+
+  /* Why-choose cards: size to content (no 520px empty boxes) */
+  .laundy-why-choose-grid { gap: 1rem !important; }
+  .why-card { min-height: 0 !important; border-radius: 22px !important; }
+  .why-card-dark-photo { min-height: 300px !important; }
+  .why-card-light { padding: 1.6rem 1.4rem !important; gap: 1.25rem; }
+  .why-card-title { font-size: 1.5rem !important; }
+
+  /* Footer: the giant wordmark is cut off on phones */
+  .footer-giant-watermark-row { display: none !important; }
+}
+@media (max-width: 768px) {
+  .laundy-hero-cta { white-space: nowrap; padding: 0 1rem; font-size: 0.92rem; }
+  .laundy-hero-cta.primary { flex: 1.3; }
+  .pricing-card-v2 { min-height: 0 !important; height: auto !important; }
+  .laundy-pricing-cards-grid-4 { gap: 1rem !important; }
+}

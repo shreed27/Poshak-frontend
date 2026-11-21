@@ -3,7 +3,7 @@ export const LAUNDY_SERVICES = [
     id: 'wash-fold',
     name: 'Wash & Fold',
     tagline: 'Fresh, hygienic & hassle-free',
-    description: 'Your everyday clothes, weighed at your door, washed in soft water, dried and neatly folded. Simple per-kilo pricing.',
+    description: 'Your everyday clothes, weighed at your door, washed, dried and neatly folded. Simple per-kilo pricing.',
     price: '₹59/kg',
     turnaround: '24 Hours',
     image: 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?auto=format&fit=crop&w=800&q=80',

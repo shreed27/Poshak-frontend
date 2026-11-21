@@ -24,7 +24,7 @@ export const LaundyAbout = ({ onOpenBooking }) => {
             viewport={{ once: true }}
             transition={{ type: "spring", stiffness: 200, damping: 22 }}
           >
-            Your clothes, our<br />care—the perfect match
+            Your clothes, our <br />care—the perfect match
           </motion.h2>
 
           <motion.p 
@@ -90,12 +90,12 @@ export const LaundyAbout = ({ onOpenBooking }) => {
             <div className="why-card-bottom-promise">
               <div className="why-launch-live-badge">
                 <span className="live-dot-pulse"></span>
-                <span>Now Live in Bengaluru</span>
+                <span>Now live in SG Palya, Bengaluru</span>
               </div>
               <div className="why-promise-chips-wrap">
-                <span className="why-promise-chip">💧 RO Purified Soft Water Wash</span>
-                <span className="why-promise-chip">⚡ Same-Day & Next-Day Turnaround</span>
-                <span className="why-promise-chip">🛡️ Zero Pre-payment Required</span>
+                <span className="why-promise-chip">Free pickup & delivery</span>
+                <span className="why-promise-chip">Weighed in front of you</span>
+                <span className="why-promise-chip">Pay after delivery</span>
               </div>
             </div>
           </motion.div>

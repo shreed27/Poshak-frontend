@@ -12,7 +12,7 @@ export const LaundyFAQ = () => {
   const faqs = [
     {
       q: 'How do I schedule a Poshak pickup?',
-      a: 'Open the app, add your pickup address, choose Wash & Fold or Wash, Fold & Iron, pick a time slot and confirm. A captain is assigned and you can follow them live on the map, with an arrival time.'
+      a: 'Open the app, add your pickup address, choose Wash & Fold or Wash, Fold & Iron, pick a time slot and confirm. A rider is assigned and calls you before arriving. They weigh your clothes in front of you and your final price updates in the app.'
     },
     {
       q: 'What does it cost?',
@@ -20,7 +20,7 @@ export const LaundyFAQ = () => {
     },
     {
       q: 'How does Alteration & Dry Cleaning work?',
-      a: 'Tap “Request a quote”, tell us what you need and add a photo if you like. We reply with a fixed price, usually within a few hours. Nothing is booked until you accept, and then a captain collects the items like any other order.'
+      a: 'Tap “Request a quote”, tell us what you need and add a photo if you like. We reply with a fixed price, usually within a few hours. Nothing is booked until you accept, and then a rider collects the items like any other order.'
     },
     {
       q: 'What areas do you serve?',
@@ -61,13 +61,8 @@ export const LaundyFAQ = () => {
             viewport={{ once: true }}
             transition={{ type: "spring", stiffness: 200, damping: 22 }}
           >
-            Got questions?<br />
+            Got questions? <br />
             We’ve got{' '}
-            <span className="faq-inline-avatar-stack">
-              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&q=80" alt="Avatar" />
-              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=80&q=80" alt="Avatar" />
-              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=80&q=80" alt="Avatar" />
-            </span>{' '}
             answers!
           </motion.h2>
 

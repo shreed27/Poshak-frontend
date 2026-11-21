@@ -30,10 +30,14 @@ export const LaundyHero = ({ onScrollToServices, onOpenBooking }) => {
           transition={{ type: "spring", stiffness: 180, damping: 22, delay: 0.2 }}
         >
           {/* Real prices from the live catalogue (no made-up testimonials). */}
-          <div className="laundy-hero-left-title">Doorstep laundry, by the kilo</div>
+          <h1 className="laundy-hero-h1">Laundry, picked up and delivered.</h1>
           <p className="laundy-hero-left-quote">
-            {services.length ? services.map((x) => `${x.name} ${x.price}`).join(' · ') : 'Wash & Fold · Wash, Fold & Iron'}. Weighed at your door, pickup and delivery included, pay after delivery.
+            {services.length ? services.map((x) => `${x.name} ${x.price}`).join(' · ') : 'Wash & Fold · Wash, Fold & Iron'}. Weighed at your door, free pickup and delivery, pay after delivery.
           </p>
+          <div className="laundy-hero-ctas">
+            <button type="button" className="laundy-hero-cta primary" onClick={onOpenBooking}>Schedule pickup <ArrowRight size={16} /></button>
+            <button type="button" className="laundy-hero-cta" onClick={onScrollToServices}>See prices</button>
+          </div>
         </motion.div>
 
         {/* Floating Right Services Preview Card */}

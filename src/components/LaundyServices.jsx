@@ -11,10 +11,10 @@ export const LaundyServices = ({ onSelectService, onOpenBooking }) => {
     {
       id: 'wash-fold',
       title: 'Wash & Fold',
-      description: 'Your everyday clothes, weighed at your door, washed in soft water, dried and neatly folded.',
+      description: 'Your everyday clothes, weighed at your door, washed, dried and neatly folded.',
       tags: ['Daily wear', 'Priced by weight', '24h Delivery'],
       price: priceOf('wash-fold', '₹59/kg'),
-      image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1200&q=85',
+      image: 'https://images.unsplash.com/photo-1567113463300-102a7eb3cb26?auto=format&fit=crop&w=1200&q=80',
       gridClass: 'bento-top-wide',
       iconType: 'straight',
       fullService: LAUNDY_SERVICES.find(s => s.id === 'wash-fold') || LAUNDY_SERVICES[0]

@@ -89,30 +89,6 @@ export const LaundyHowItWorks = () => {
                 alt="Doorstep Laundry Handover" 
                 className="how-courier-img"
               />
-              <div className="how-photo-user-badge">
-                <div className="how-badge-top-row">
-                  <img 
-                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&q=80" 
-                    alt="Poshak Avatar" 
-                    className="how-badge-avatar"
-                  />
-                  <div className="how-badge-text">
-                    <span className="how-badge-name">Poshak</span>
-                    <span className="how-badge-handle">@poshak</span>
-                  </div>
-                </div>
-                <div className="how-badge-bottom-row">
-                  <div className="how-badge-avatar-stack">
-                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=60&q=80" alt="User" />
-                    <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=60&q=80" alt="User" />
-                    <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=60&q=80" alt="User" />
-                  </div>
-                  <span className="how-badge-reviews">Verified Doorstep Care</span>
-                  <svg className="how-badge-wave" viewBox="0 0 50 20" width="50" height="20">
-                    <path d="M 0 15 Q 12 5, 25 15 T 50 10" fill="none" stroke="#fa5929" strokeWidth="2.5" strokeLinecap="round" />
-                  </svg>
-                </div>
-              </div>
             </motion.div>
           </motion.div>
 
