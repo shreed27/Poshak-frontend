@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ChevronDown, ChevronRight, ChevronUp, Camera, X, Plus, Minus, Trash2, Smartphone, CreditCard, Landmark, Wallet, Banknote, Check, Ticket, Clock } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronRight, ChevronUp, Camera, X, Smartphone, CreditCard, Landmark, Wallet, Banknote, Check, Ticket, Clock } from 'lucide-react';
 import { useCatalog } from '../../context/CatalogContext';
 import { usePriceQuote } from '../../hooks/usePriceQuote';
 import { slotText } from '../../hooks/useSlots';
@@ -9,7 +9,8 @@ import { CouponBox } from './CouponBox';
 import { usePaymentsLive } from '../../lib/payments';
 import { isBackendConfigured } from '../../lib/supabase';
 import { useEscape } from '../../lib/useEscape';
-import { DEFAULT_KG, MAX_KG } from './SwiggyHomeView';
+import { ClothesStepper } from './SwiggyHomeView';
+import { DEFAULT_PIECES, kgFor, estPrice, perPiece, clothesLabel } from '../../lib/estimate';
 
 const MAX_PHOTOS = 4;
 
@@ -22,17 +23,8 @@ export const PAY_METHODS = [
   { id: 'cod', group: 'Pay on delivery', label: 'Pay on delivery', sub: 'Cash or UPI to the rider when your clothes come back', Icon: Banknote }
 ];
 
-// Compact outlined stepper used inside the cart (− 4 kg +).
-const CartStepper = ({ kg, onChange }) => (
-  <div className="qc-ostep" role="group" aria-label="Estimated weight">
-    <button type="button" onClick={() => onChange(kg - 1)} aria-label={kg <= 1 ? 'Remove' : 'Less'}>{kg <= 1 ? <Trash2 size={13} /> : <Minus size={14} strokeWidth={3} />}</button>
-    <span>{kg} kg</span>
-    <button type="button" onClick={() => onChange(Math.min(MAX_KG, kg + 1))} disabled={kg >= MAX_KG} aria-label="More"><Plus size={14} strokeWidth={3} /></button>
-  </div>
-);
-
 // Checkout page (full screen on phones). Price is an estimate; the rider weighs at the door and the server bills the real weight.
-export const BookingFlowModal = ({ isOpen, onClose, basket = {}, onSetKg, onClearBasket, activeAddress, onChangeAddress, onConfirmOrder }) => {
+export const BookingFlowModal = ({ isOpen, onClose, basket = {}, onSetPieces, onClearBasket, activeAddress, onChangeAddress, onConfirmOrder }) => {
   const { services } = useCatalog();
   const paymentsLive = usePaymentsLive() && isBackendConfigured;
   const [slot, setSlot] = useState(null);
@@ -48,10 +40,12 @@ export const BookingFlowModal = ({ isOpen, onClose, basket = {}, onSetKg, onClea
   useEscape(isOpen && !payOpen, onClose);
   useEscape(payOpen, () => setPayOpen(false));
 
-  const lines = services.filter((s) => basket[s.id] > 0).map((s) => ({ svc: s, kg: basket[s.id] }));
+  // Basket holds number of clothes per service; the server prices an estimated weight until the rider weighs at pickup.
+  const lines = services.filter((s) => basket[s.id] > 0).map((s) => ({ svc: s, n: basket[s.id], kg: kgFor(basket[s.id]) }));
   const others = services.filter((s) => !(basket[s.id] > 0));
+  const totalPieces = lines.reduce((a, l) => a + l.n, 0);
   const totalKg = lines.reduce((a, l) => a + l.kg, 0);
-  const items = useMemo(() => lines.map((l) => ({ service_id: l.svc.id, qty: l.kg })), [JSON.stringify(basket), services]); // eslint-disable-line react-hooks/exhaustive-deps
+  const items = useMemo(() => lines.map((l) => ({ service_id: l.svc.id, qty: l.kg, pieces: l.n })), [JSON.stringify(basket), services]); // eslint-disable-line react-hooks/exhaustive-deps
   const quote = usePriceQuote(items, coupon);
 
   if (!isOpen) return null;
@@ -79,7 +73,7 @@ export const BookingFlowModal = ({ isOpen, onClose, basket = {}, onSetKg, onClea
       serviceCategory: lines[0].svc.id,
       laundromatName: 'Poshak',
       laundromatArea: '',
-      itemsCount: Math.round(totalKg * 2.5),
+      itemsCount: totalPieces,
       weightKg: totalKg.toFixed(1),
       totalAmount: quote.total,
       paymentMethod: online ? `Online (${chosen.label})` : 'Pay on delivery (cash / UPI)',
@@ -146,20 +140,20 @@ export const BookingFlowModal = ({ isOpen, onClose, basket = {}, onSetKg, onClea
         <div className="qc-sheet-body">
           {/* Items */}
           <div className="qc-card">
-            <div className="qc-card-t">{lines.length ? `${lines.length} ${lines.length === 1 ? 'service' : 'services'} · about ${totalKg} kg` : 'Your cart'}
+            <div className="qc-card-t">{lines.length ? `${lines.length} ${lines.length === 1 ? 'service' : 'services'} · ${clothesLabel(totalPieces)}` : 'Your cart'}
               {lines.length > 0 && onClearBasket && <button type="button" className="qc-link-muted" onClick={onClearBasket}>Clear</button>}
             </div>
             {lines.length === 0 ? (
               <div className="qc-empty"><b>Nothing in your cart yet</b><p>Add a service below to schedule a pickup.</p></div>
-            ) : lines.map(({ svc, kg }) => (
+            ) : lines.map(({ svc, n }) => (
               <div key={svc.id} className="qc-cart-row">
                 <img src={svc.image} alt="" />
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <b>{svc.name}</b>
-                  <span>₹{svc.unitPrice}/{svc.unit} · weighed at your door</span>
+                  <span>{clothesLabel(n)} · ≈ ₹{perPiece(svc.unitPrice)} each</span>
                 </div>
-                <em>₹{Math.round(kg * svc.unitPrice)}</em>
-                <CartStepper kg={kg} onChange={(v) => onSetKg(svc.id, v)} />
+                <em>≈ ₹{estPrice(n, svc.unitPrice)}</em>
+                <ClothesStepper outline n={n} onChange={(v) => onSetPieces(svc.id, v)} />
               </div>
             ))}
           </div>
@@ -171,9 +165,9 @@ export const BookingFlowModal = ({ isOpen, onClose, basket = {}, onSetKg, onClea
               <div className="qc-addmore">
                 {others.map((s) => (
                   <div key={s.id} className="qc-addmore-item">
-                    <div className="qc-addmore-img"><img src={s.image} alt="" /><button type="button" className="qc-add sm" onClick={() => onSetKg(s.id, DEFAULT_KG)}>ADD</button></div>
+                    <div className="qc-addmore-img"><img src={s.image} alt="" /><button type="button" className="qc-add sm" onClick={() => onSetPieces(s.id, DEFAULT_PIECES)}>ADD</button></div>
                     <b>{s.name}</b>
-                    <span>₹{s.unitPrice}/{s.unit}</span>
+                    <span>≈ ₹{perPiece(s.unitPrice)} per piece</span>
                   </div>
                 ))}
               </div>
@@ -232,12 +226,13 @@ export const BookingFlowModal = ({ isOpen, onClose, basket = {}, onSetKg, onClea
           {lines.length > 0 && (
             <div className="qc-card qc-billcard">
               <div className="qc-bill">
-                <div><span>Item total (about {totalKg} kg)</span><span>₹{quote.subtotal}</span></div>
+                <div><span>Items ({clothesLabel(totalPieces)}, about {totalKg} kg)</span><span>≈ ₹{quote.subtotal}</span></div>
                 <div><span>Pickup & delivery</span><span className="free">FREE</span></div>
                 {quote.discount > 0 && <div className="save"><span>Discount</span><span>−₹{quote.discount}</span></div>}
                 {minTopUp > 0 && <div><span>Minimum order top-up</span><span>₹{minTopUp}</span></div>}
-                <div className="total"><span>To pay (estimate)</span><span>₹{quote.total}</span></div>
+                <div className="total"><span>Estimated total</span><span>₹{quote.total}</span></div>
               </div>
+              <p className="qc-note">The rider weighs your clothes at pickup and your final price updates in the Orders tab. You only pay for the actual weight.</p>
               {quote.discount > 0 && <div className="qc-saved">You save ₹{quote.discount} on this order</div>}
             </div>
           )}
@@ -245,7 +240,7 @@ export const BookingFlowModal = ({ isOpen, onClose, basket = {}, onSetKg, onClea
           <div className="qc-terms">
             <b>Good to know</b>
             <ul>
-              <li>The rider weighs your clothes at pickup. Your final bill is for the actual weight.</li>
+              <li>Prices are by weight. We estimate about 4 clothes per kg; the rider weighs at pickup and sets the final price.</li>
               <li>If you pay online now, any difference after weighing is settled at delivery.</li>
               <li>Cancel free any time before pickup from the Orders tab.</li>
             </ul>

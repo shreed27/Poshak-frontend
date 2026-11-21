@@ -332,3 +332,9 @@
 .qc-dialog-actions button.primary { background: #ef5a24; border-color: #ef5a24; color: #fff; }
 .qc-sheet { position: relative; }
 .qc-dialog-actions button.primary.danger { background: #c62828; border-color: #c62828; }
+
+/* Clothes count stepper: the number is typeable */
+.qc-step input, .qc-ostep input { width: 38px; height: 100%; border: 0; background: transparent; color: inherit; text-align: center; font: inherit; font-size: 0.86rem; font-weight: 800; font-variant-numeric: tabular-nums; padding: 0; outline: none; -moz-appearance: textfield; }
+.qc-step input:focus, .qc-ostep input:focus { background: rgba(0, 0, 0, 0.08); border-radius: 6px; }
+.qc-item-rate { color: var(--qc-ink-4); font-weight: 600; }
+.qc-item-cta .qc-est { max-width: 120px; text-align: right; white-space: normal; }

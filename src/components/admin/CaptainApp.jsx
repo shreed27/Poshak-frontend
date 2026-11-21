@@ -72,7 +72,8 @@ const PickupPanel = ({ o, run }) => {
   const { settings } = useCatalog();
   const needPhotos = settings.require_photos !== false;
   const pieces = totalPieces(counts);
-  const [qty, setQty] = useState(() => Object.fromEntries(o.bookedItems.map((it) => [it.service_id, String(it.qty)])));
+  // Starts empty: the rider must type what the scale shows (the customer only guessed a number of clothes).
+  const [qty, setQty] = useState(() => Object.fromEntries(o.bookedItems.map((it) => [it.service_id, ''])));
   const { services } = useCatalog();
   const items = o.bookedItems.map((it) => ({ service_id: it.service_id, qty: Number(qty[it.service_id]) || 0 }));
   const valid = items.every((it) => it.qty > 0) && otp.length === 4 && (!needPhotos || (pieces > 0 && photos.length > 0));
@@ -98,9 +99,9 @@ const PickupPanel = ({ o, run }) => {
           <div key={it.service_id} className="cap-weigh">
             <div>
               <b>{svc?.name || it.service_id}</b>
-              <span>Customer estimated {it.qty} {svc?.unit}</span>
+              <span>{it.pieces ? `Customer said about ${it.pieces} clothes (≈ ${it.qty} ${svc?.unit})` : `Customer estimated ${it.qty} ${svc?.unit}`}</span>
             </div>
-            <input inputMode="decimal" value={qty[it.service_id]}
+            <input inputMode="decimal" placeholder="Scale" aria-label={`Weight for ${svc?.name || it.service_id}`} value={qty[it.service_id]}
               onChange={(e) => setQty({ ...qty, [it.service_id]: e.target.value.replace(/[^\d.]/g, '') })} />
             <em>{svc?.unit}</em>
           </div>
@@ -112,7 +113,7 @@ const PickupPanel = ({ o, run }) => {
       <h4 style={{ marginTop: '0.9rem' }}>Photo of the clothes {needPhotos && <small className="ops-muted">(required)</small>}</h4>
       <PhotoCapture orderId={o.dbId} label="pickup" value={photos} onChange={setPhotos} />
       <div className="cap-bill">
-        <span>Final bill</span><b>₹{bill}</b>
+        <span>Final bill</span><b>{items.every((it) => it.qty > 0) ? `₹${bill}` : 'Enter weight'}</b>
         <small>{bill !== o.estimatedAmount ? `Estimate was ₹${o.estimatedAmount}` : 'Matches the estimate'}</small>
       </div>
       <div className="ops-otp">

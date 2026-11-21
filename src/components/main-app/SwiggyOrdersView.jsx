@@ -67,13 +67,13 @@ const BillBox = ({ order, onPayNow }) => {
     <div className="psk-billbox">
       <h4>{weighed ? 'Final bill' : 'Estimated bill'} {order.paymentStatus === 'paid' ? <span className="psk-paid-pill">PAID</span> : <span className="psk-due-pill">₹{order.dueAmount} DUE</span>}</h4>
       {weighed && order.actualItems ? order.actualItems.map((it, i) => (
-        <div key={i} className="psk-bill-row"><span>Weighed: {it.service_id.replace(/-/g, ' ')}</span><span>{it.qty}</span></div>
+        <div key={i} className="psk-bill-row"><span>Weighed: {it.service_id.replace(/-/g, ' ')}</span><span>{it.qty} kg</span></div>
       )) : null}
       {weighed && <div className="psk-bill-row"><span>Estimated at booking</span><span>₹{order.estimatedAmount}</span></div>}
       <div className="psk-bill-row total"><span>{weighed ? 'Final amount' : 'Estimated amount'}</span><span>₹{order.totalAmount}</span></div>
       {order.paidAmount > 0 && <div className="psk-bill-row"><span>Paid</span><span>−₹{order.paidAmount}</span></div>}
       {order.refundDue > 0 && <div className="psk-bill-row"><span>Refund being processed</span><span>₹{order.refundDue}</span></div>}
-      {!weighed && <p className="psk-bill-note"><Scale size={12} style={{ verticalAlign: '-2px' }} /> Your rider weighs the clothes at pickup. The final bill appears here instantly.</p>}
+      {!weighed && <p className="psk-bill-note"><Scale size={12} style={{ verticalAlign: '-2px' }} /> This is an estimate from the number of clothes. Your rider weighs them at pickup and the final price appears here right away.</p>}
       {open && order.dueAmount > 0 && paymentsLive && (
         <>
           <button className="psk-paynow" onClick={pay} disabled={busy}>{busy ? 'Opening…' : `Pay ₹${order.dueAmount} online now`}</button>

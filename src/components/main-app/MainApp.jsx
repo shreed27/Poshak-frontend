@@ -28,6 +28,7 @@ import './QuickCommerce.css';
 
 import { useCatalog } from '../../context/CatalogContext';
 import { askConfirm } from '../../lib/confirm';
+import { estPrice } from '../../lib/estimate';
 
 // Demo data from earlier builds (fake Bengaluru addresses / orders) must not
 // leak into a real, location-aware session.
@@ -58,14 +59,14 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
   const [activeTab, setActiveTab] = useState('laundry');
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
 
-  // The cart: { serviceId: estimated kg }. Remembered on this device until the order is placed.
+  // The cart: { serviceId: number of clothes }. Remembered on this device until the order is placed.
   const [basket, setBasket] = useState(() => {
-    const b = loadJson('poshak_basket', {});
+    const b = loadJson('poshak_cart_pieces', {});
     return b && typeof b === 'object' && !Array.isArray(b) ? b : {};
   });
-  const setKg = (id, kg) => setBasket((b) => {
+  const setPieces = (id, n) => setBasket((b) => {
     const next = { ...b };
-    if (kg >= 1) next[id] = Math.round(kg); else delete next[id];
+    if (n >= 1) next[id] = Math.round(n); else delete next[id];
     return next;
   });
 
@@ -116,7 +117,7 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
 
   // Local storage synchronization
   useEffect(() => {
-    try { localStorage.setItem('poshak_basket', JSON.stringify(basket)); localStorage.removeItem('poshak_cart'); } catch { /* ignore */ }
+    try { localStorage.setItem('poshak_cart_pieces', JSON.stringify(basket)); localStorage.removeItem('poshak_basket'); localStorage.removeItem('poshak_cart'); } catch { /* ignore */ }
   }, [basket]);
 
   useEffect(() => {
@@ -320,16 +321,19 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
     const names = String(pastOrder.serviceName || '').split(' + ');
     const picked = services.filter(s => names.includes(s.name));
     const list = picked.length ? picked : services.slice(0, 1);
-    const each = Math.max(1, Math.round((Number(pastOrder.weightKg) || 4) / list.length));
-    setBasket(Object.fromEntries(list.map(s => [s.id, each])));
+    const booked = pastOrder.bookedItems || [];
+    setBasket(Object.fromEntries(list.map(s => {
+      const it = booked.find(b => b.service_id === s.id);
+      return [s.id, Math.max(1, Math.round(it?.pieces || (it?.qty ? it.qty * 4 : 10)))];
+    })));
     setIsBookingModalOpen(true);
   };
 
   const activeOrder = orders.find(o => o.status === 'active') || null;
   const basketLines = services.filter(s => basket[s.id] > 0);
   const totalCartCount = basketLines.length;
-  const basketKg = basketLines.reduce((a, s) => a + basket[s.id], 0);
-  const basketEst = basketLines.reduce((a, s) => a + basket[s.id] * s.unitPrice, 0);
+  const basketPieces = basketLines.reduce((a, s) => a + basket[s.id], 0);
+  const basketEst = basketLines.reduce((a, s) => a + estPrice(basket[s.id], s.unitPrice), 0);
 
   // Distance between where the user physically is and the selected address
   const awayKm = useMemo(
@@ -397,7 +401,7 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
                 activeOrder={activeOrder}
                 onNavigateToOrders={() => setActiveTab('orders')}
                 basket={basket}
-                onSetKg={setKg}
+                onSetPieces={setPieces}
                 onRequestQuote={openQuote}
                 now={now}
               />
@@ -461,7 +465,7 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
       {totalCartCount > 0 && !isBookingModalOpen && activeTab === 'laundry' && (
         <button type="button" className="qc-cartbar" onClick={openCart}>
           <span className="qc-cartbar-l">
-            <b>{totalCartCount} {totalCartCount === 1 ? 'service' : 'services'} · about {basketKg} kg</b>
+            <b>{totalCartCount} {totalCartCount === 1 ? 'service' : 'services'} · {basketPieces} clothes</b>
             <span>≈ ₹{Math.round(basketEst)}</span>
           </span>
           <span className="qc-cartbar-r">Checkout <ChevronRight size={18} strokeWidth={2.6} /></span>
@@ -475,7 +479,7 @@ export const MainApp = ({ user, logout, onBackToLanding }) => {
             isOpen={isBookingModalOpen}
             onClose={() => setIsBookingModalOpen(false)}
             basket={basket}
-            onSetKg={setKg}
+            onSetPieces={setPieces}
             activeAddress={address}
             onChangeAddress={() => setIsLocationPickerOpen(true)}
             onClearBasket={() => setBasket({})}
